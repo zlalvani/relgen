@@ -1,0 +1,24 @@
+{
+  "name": "relgen",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@repo/typescript-config": "workspace:*",
+    "turbo": "latest",
+    "ultracite": "^4.1.14"
+  },
+  "packageManager": "pnpm@9.0.6",
+  "engines": {
+    "node": ">=21"
+  },
+  "dependencies": {
+    "semver": "^7.6.0"
+  }
+}
