@@ -1,3 +1,5 @@
-import { foo } from 'relgen-core';
+import { createRelgen } from 'relgen-core';
 
-console.log(foo());
+const relgen = createRelgen({
+  llmApiKey: 'my-api-key',
+});

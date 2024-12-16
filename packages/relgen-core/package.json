@@ -11,7 +11,10 @@
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch --sourcemap",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@ai-sdk/openai": "^1.0.8",
+    "ai": "^4.0.18"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
