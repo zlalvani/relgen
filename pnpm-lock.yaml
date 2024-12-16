@@ -46,6 +46,9 @@ importers:
 
   packages/relgen-core:
     dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^1.0.5
+        version: 1.0.5(zod@3.24.1)
       '@ai-sdk/openai':
         specifier: ^1.0.8
         version: 1.0.8(zod@3.24.1)
@@ -69,6 +72,12 @@ importers:
   tooling/typescript-config: {}
 
 packages:
+
+  '@ai-sdk/anthropic@1.0.5':
+    resolution: {integrity: sha512-qNEB7AYz6W0HTHbhJk/brhGZtjivcRdberD1fn3aCdvzlQ321q1EOTc2k7TvfE+PmNCZbp/uutBbWPGHHODKpw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.0.0
 
   '@ai-sdk/openai@1.0.8':
     resolution: {integrity: sha512-wcTHM9qgRWGYVO3WxPSTN/RwnZ9R5/17xyo61iUCCSCZaAuJyh6fKddO0/oamwDp3BG7g+4wbfAyuTo32H+fHw==}
@@ -883,6 +892,12 @@ packages:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
 snapshots:
+
+  '@ai-sdk/anthropic@1.0.5(zod@3.24.1)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.2
+      '@ai-sdk/provider-utils': 2.0.4(zod@3.24.1)
+      zod: 3.24.1
 
   '@ai-sdk/openai@1.0.8(zod@3.24.1)':
     dependencies:
