@@ -1,8 +1,8 @@
 import { createRelgen } from 'relgen-core';
 
 const relgen = createRelgen({
-  llmApiKey: 'my-api-key',
   model: {
+    apiKey: 'my-api-key',
     provider: 'openai',
     modelId: 'gpt-4o-mini',
   },

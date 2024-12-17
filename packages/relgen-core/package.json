@@ -14,7 +14,10 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.5",
     "@ai-sdk/openai": "^1.0.8",
-    "ai": "^4.0.18"
+    "@linear/sdk": "^35.0.0",
+    "ai": "^4.0.18",
+    "octokit": "^4.0.2",
+    "simple-git": "^3.27.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
