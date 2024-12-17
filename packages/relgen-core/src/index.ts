@@ -1,63 +1,80 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
 import type { AnthropicMessagesModelId } from '@ai-sdk/anthropic/internal';
-import { createOpenAI } from '@ai-sdk/openai';
 import type { OpenAIChatModelId } from '@ai-sdk/openai/internal';
-import { type LanguageModel, generateText } from 'ai';
+import { type GithubClient, injectGithubClient } from './lib/clients/github';
+import {
+  type LanguageModelService,
+  injectLanguageModelService,
+} from './lib/llm';
 
 export type RelgenOptions = {
-  llmApiKey: string;
   model:
     | {
+        apiKey: string;
         provider: 'openai';
         modelId: OpenAIChatModelId;
       }
     | {
+        apiKey: string;
         provider: 'anthropic';
         modelId: AnthropicMessagesModelId;
       };
+  integrations?: {
+    github?: {
+      token: string;
+      write: boolean;
+      repoUrl?: string;
+    };
+    linear?: {
+      token: string;
+    };
+    jira?: {
+      token: string;
+    };
+    slack?: {
+      token: string;
+    };
+  };
   template?: string;
 };
 
 const relgen = ({
-  model,
+  llm,
+  template,
+  github,
 }: {
-  model: LanguageModel;
+  llm: LanguageModelService;
   template?: string;
+  github?: {
+    client: GithubClient;
+    write: boolean;
+    repoUrl?: string;
+  };
 }) => {
   return {
-    generate: async () => {
-      return await generateText({
-        model,
-        prompt: 'Generate some release notes',
-      });
+    releaseNotes: {
+      generate: async () => {},
+    },
+    pr: {
+      describe: async () => {},
+      label: async () => {},
+    },
+    issue: {
+      label: async () => {},
     },
   };
 };
 
 export const createRelgen = (options: RelgenOptions) => {
-  const { llmApiKey, template } = options;
-
-  let model: LanguageModel;
-
-  switch (options.model.provider) {
-    case 'openai': {
-      model = createOpenAI({ apiKey: llmApiKey }).chat(options.model.modelId);
-      break;
-    }
-    case 'anthropic': {
-      model = createAnthropic({ apiKey: llmApiKey }).languageModel(
-        options.model.modelId
-      );
-      break;
-    }
-    default: {
-      throw new Error('Invalid model provider');
-    }
-  }
+  const { model, template, integrations } = options;
 
   return relgen({
-    model,
+    llm: injectLanguageModelService(model),
     template,
+    github: integrations?.github && {
+      client: injectGithubClient({ token: integrations.github.token }),
+      write: integrations.github.write ?? false,
+      repoUrl: integrations.github.repoUrl,
+    },
   });
 };
 
