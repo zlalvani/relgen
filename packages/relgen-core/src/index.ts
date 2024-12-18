@@ -237,10 +237,10 @@ const relgen = ({
         );
 
         if (options?.write) {
-          await github.rest.pulls.update({
+          await github.rest.issues.update({
             owner,
             repo,
-            pull_number: num,
+            issue_number: num,
             labels:
               options.write === 'replacing'
                 ? result.object.labels
