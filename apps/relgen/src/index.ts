@@ -21,24 +21,37 @@ const result = await relgen.pr.describe(
   {
     owner: 'zlalvani',
     repo: 'relgen',
-    num: 2,
+    num: 4,
   },
   {
     template: dedent`
       ### Summary
       - **Changes:** What the PR updates
-      - **Why:** Reason or problem solved
-
-      ### Details
-      - **Approach:** Brief implementation outline
-      - **Affected Files:** Key files or modules
+      - **Approach:** How the PR solves the problem
 
       ### Testing
       - **Steps:** How to test this PR
-      - **Expected Outcome:** What should happen
     `,
-    // write: 'pr',
+    write: 'pr',
   }
 );
 
 console.log(result);
+
+// const labelResult = await relgen.issue.label(
+//   {
+//     owner: 'sindresorhus',
+//     repo: 'type-fest',
+//     num: 825,
+//   },
+//   {
+//     write: false,
+//     exclude: ['help wanted'],
+//     prompt: dedent`
+//     Prefer the "type addition" label instead of "enhancement" if the PR adds a new type definition.
+//     Don't label something as a bug if it's just asking a question or the user seems confused.
+//     `,
+//   }
+// );
+
+// console.log(labelResult);

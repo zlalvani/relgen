@@ -6,6 +6,8 @@ import { z } from 'zod';
 import type { RelgenOptions } from '..';
 import type {
   DiffContext,
+  IssueContext,
+  LabelContext,
   PullRequestContext,
   TicketContext,
 } from '../contexts';
@@ -16,7 +18,6 @@ export const languageModelService = (model: LanguageModel) => {
       describe: async (context: {
         changes: {
           pr: PullRequestContext;
-          diff: DiffContext;
         }[];
         tickets?: TicketContext[];
       }) => {
@@ -38,6 +39,7 @@ export const languageModelService = (model: LanguageModel) => {
         },
         options?: {
           template?: string;
+          prompt?: string;
         }
       ) => {
         const prompt = dedent`
@@ -52,6 +54,15 @@ export const languageModelService = (model: LanguageModel) => {
               <template>
               ${options.template}
               </template>`
+              : ''
+          }
+
+          ${
+            options?.prompt
+              ? dedent`
+            Extra instructions:
+            ${options.prompt}
+            `
               : ''
           }
           `;
@@ -75,7 +86,50 @@ export const languageModelService = (model: LanguageModel) => {
       label: async () => {},
     },
     issue: {
-      label: async () => {},
+      label: async (
+        context: {
+          issue: IssueContext;
+          labels: LabelContext[];
+        },
+        options?: {
+          prompt?: string;
+        }
+      ) => {
+        const prompt = dedent`
+          Here's the issue context:
+          ${context.issue.prompt}
+
+          Here are the available labels:
+          <labels>
+          ${context.labels.map((label) => label.prompt).join('\n')}
+          </labels>
+          
+          ${
+            options?.prompt
+              ? dedent`
+            Extra instructions:
+            ${options.prompt}
+            `
+              : ''
+          }
+          `;
+
+        return await generateObject({
+          model,
+          schema: z.object({
+            labels: z.array(z.string()),
+          }),
+          system: dedent`
+          You are an expert software engineer tasked with labeling an issue.
+          Use the given context to generate a list of labels that will be added to the issue.
+          If no labels are relevant, return an empty list.
+          If there is a 'help wanted' or similar label, apply it if the issue seems simple or it is described as such.
+          DO NOT INCLUDE A LABEL if it is not relevant.
+          DO NOT USE MORE THAN ONE LABEL unless it is TRULY necessary (the issue fits multiple labels very well).
+          `,
+          prompt,
+        });
+      },
     },
   };
 };
