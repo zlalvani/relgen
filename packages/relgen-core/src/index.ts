@@ -2,6 +2,7 @@ import type { AnthropicMessagesModelId } from '@ai-sdk/anthropic/internal';
 import type { OpenAIChatModelId } from '@ai-sdk/openai/internal';
 import { LinearClient } from '@linear/sdk';
 import dedent from 'dedent';
+import { unique } from 'radashi';
 import type { MergeExclusive } from 'type-fest';
 import { type GithubClient, createGithubClient } from './clients/github';
 import { makeContext } from './contexts';
@@ -81,6 +82,7 @@ const relgen = ({
         options?: {
           write?: 'pr' | 'comment' | false;
           template?: string;
+          prompt?: string;
         }
       ) => {
         const { owner, repo, num } = args;
@@ -132,6 +134,7 @@ const relgen = ({
           },
           {
             template: options?.template,
+            prompt: options?.prompt,
           }
         );
 
@@ -151,8 +154,85 @@ const relgen = ({
       },
     },
     issue: {
-      label: async () => {
-        throw new Error('Not implemented');
+      label: async (
+        args: {
+          owner: string;
+          repo: string;
+          num: number;
+        },
+        options?: {
+          write?: 'additive' | 'replacing' | false;
+          exclude?: string[];
+          prompt?: string;
+        }
+      ) => {
+        const { owner, repo, num } = args;
+
+        const [labels, issue] = await Promise.all([
+          github.rest.issues.listLabelsForRepo({
+            owner,
+            repo,
+          }),
+          github.rest.issues.get({
+            owner,
+            repo,
+            issue_number: num,
+          }),
+        ]);
+
+        const issueContext = makeContext({
+          source: 'github',
+          type: 'issue',
+          data: issue,
+          prompt: dedent`
+          <issue>
+            <title>${issue.data.title}</title>
+            <body>${issue.data.body}</body>
+          </issue>
+          `,
+        });
+
+        const exclude = new Set(options?.exclude ?? []);
+
+        const labelContexts = labels.data
+          .filter((label) => !exclude.has(label.name))
+          .map((label) => {
+            return makeContext({
+              source: 'github',
+              type: 'label',
+              data: label,
+              prompt: dedent`
+              <label>
+                <name>${label.name}</name>
+                <description>${label.description}</description>
+              </label>
+            `,
+            });
+          });
+
+        const result = await llm.issue.label(
+          {
+            issue: issueContext,
+            labels: labelContexts,
+          },
+          {
+            prompt: options?.prompt,
+          }
+        );
+
+        if (options?.write) {
+          await github.rest.issues.update({
+            owner,
+            repo,
+            issue_number: num,
+            labels:
+              options.write === 'replacing'
+                ? result.object.labels
+                : unique([...issue.data.labels, ...result.object.labels]),
+          });
+        }
+
+        return result.object;
       },
     },
   };

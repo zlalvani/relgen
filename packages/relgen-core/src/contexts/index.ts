@@ -1,4 +1,4 @@
-export type ContextType = 'ticket' | 'pr' | 'issue' | 'diff' | 'code';
+export type ContextType = 'ticket' | 'pr' | 'issue' | 'diff' | 'code' | 'label';
 export type ContextSource = 'github' | 'linear' | 'jira';
 
 export type Context<
@@ -16,6 +16,8 @@ export type PullRequestContext = Context<'github', 'pr', unknown>;
 export type DiffContext = Context<'github', 'diff', unknown>;
 export type IssueContext = Context<'github', 'issue', unknown>;
 export type TicketContext = Context<'linear', 'ticket', unknown>;
+export type CodeContext = Context<'github', 'code', unknown>;
+export type LabelContext = Context<'github', 'label', unknown>;
 
 // Helper for initializing a context
 export const makeContext = <
