@@ -32,26 +32,48 @@ const result = await relgen.pr.describe(
       ### Testing
       - **Steps:** How to test this PR
     `,
-    write: 'pr',
+    write: false,
   }
 );
 
 console.log(result);
 
-// const labelResult = await relgen.issue.label(
-//   {
-//     owner: 'sindresorhus',
-//     repo: 'type-fest',
-//     num: 825,
-//   },
-//   {
-//     write: false,
-//     exclude: ['help wanted'],
-//     prompt: dedent`
-//     Prefer the "type addition" label instead of "enhancement" if the PR adds a new type definition.
-//     Don't label something as a bug if it's just asking a question or the user seems confused.
-//     `,
-//   }
-// );
+const labelResult = await relgen.issue.label(
+  {
+    owner: 'sindresorhus',
+    repo: 'type-fest',
+    num: 959,
+  },
+  {
+    // write: 'replacing',
+    write: false,
+    exclude: ['help wanted'],
+    prompt: dedent`
+    Prefer the "type addition" label instead of "enhancement" if the PR adds a new type definition.
+    Don't label something as a bug if it's just asking a question or the user seems confused.
+    `,
+  }
+);
 
-// console.log(labelResult);
+// Prefer the "type addition" label instead of "enhancement" if the PR adds a new type definition.
+// Don't label something as a bug if it's just asking a question or the user seems confused.
+console.log(labelResult);
+
+const prLabelResult = await relgen.pr.label(
+  {
+    owner: 'zlalvani',
+    repo: 'relgen',
+    num: 4,
+  },
+  {
+    // write: 'replacing',
+    write: false,
+    exclude: ['help wanted'],
+    // prompt: dedent`
+    // Add the testing label if the PR is related to testing.
+    // Add the enhancement label as an extra if the PR is about improving something, e.g. testing + enhancement.
+    // `,
+  }
+);
+
+console.log(prLabelResult);

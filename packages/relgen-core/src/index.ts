@@ -149,8 +149,106 @@ const relgen = ({
 
         return result.object;
       },
-      label: async () => {
-        throw new Error('Not implemented');
+      label: async (
+        args: {
+          owner: string;
+          repo: string;
+          num: number;
+        },
+        options?: {
+          write?: 'additive' | 'replacing' | false;
+          exclude?: string[];
+          prompt?: string;
+        }
+      ) => {
+        const { owner, repo, num } = args;
+
+        const [labels, pr, diff] = await Promise.all([
+          github.rest.issues.listLabelsForRepo({
+            owner,
+            repo,
+          }),
+          github.rest.pulls.get({
+            owner,
+            repo,
+            pull_number: num,
+          }),
+          github.custom.pulls.diff({
+            owner,
+            repo,
+            num,
+          }),
+        ]);
+
+        const prContext = makeContext({
+          source: 'github',
+          type: 'pr',
+          data: pr,
+          prompt: dedent`
+          <pr>
+            <title>${pr.data.title}</title>
+            <body>${pr.data.body}</body>
+          </pr>
+          `,
+        });
+
+        const exclude = new Set(options?.exclude ?? []);
+
+        const labelContexts = labels.data
+          .filter((label) => !exclude.has(label.name))
+          .map((label) => {
+            return makeContext({
+              source: 'github',
+              type: 'label',
+              data: label,
+              prompt: dedent`
+              <label>
+                <name>${label.name}</name>
+                <description>${label.description}</description>
+              </label>
+            `,
+            });
+          });
+
+        const diffContext = makeContext({
+          source: 'github',
+          type: 'diff',
+          data: diff,
+          prompt: dedent`
+          <diff>
+            <raw>
+            ${diff.data.$raw}
+            </raw>
+          </diff>
+          `,
+        });
+
+        const result = await llm.pr.label(
+          {
+            change: {
+              pr: prContext,
+              diff: diffContext,
+            },
+            labels: labelContexts,
+          },
+          {
+            prompt: options?.prompt,
+          }
+        );
+
+        if (options?.write) {
+          await github.rest.pulls.update({
+            owner,
+            repo,
+            pull_number: num,
+            labels:
+              options.write === 'replacing'
+                ? result.object.labels
+                : unique([...pr.data.labels, ...result.object.labels]),
+          });
+        }
+
+        return result.object;
       },
     },
     issue: {
