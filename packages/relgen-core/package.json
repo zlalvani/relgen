@@ -1,14 +1,11 @@
 {
   "name": "relgen-core",
   "version": "0.0.1",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --sourcemap",
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --clean",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -16,8 +13,13 @@
     "@ai-sdk/openai": "^1.0.8",
     "@linear/sdk": "^35.0.0",
     "ai": "^4.0.18",
+    "dedent": "^1.5.3",
+    "gitdiff-parser": "^0.3.1",
     "octokit": "^4.0.2",
-    "simple-git": "^3.27.0"
+    "radashi": "^12.3.0",
+    "simple-git": "^3.27.0",
+    "type-fest": "^4.30.2",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

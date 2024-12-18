@@ -11,6 +11,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@repo/typescript-config": "workspace:*",
+    "dotenv-cli": "^7.4.4",
     "turbo": "latest",
     "ultracite": "^4.1.14"
   },

@@ -1,7 +1,7 @@
 import { LinearClient as SdkClient } from '@linear/sdk';
 
 export const linearClient = (sdk: SdkClient) => {
-  return {};
+  // sdk.return;
 };
 
 export const injectLinearClient = ({
