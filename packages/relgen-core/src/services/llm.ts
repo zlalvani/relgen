@@ -90,6 +90,7 @@ export const languageModelService = (model: LanguageModel) => {
             diff: DiffContext;
           };
           labels: LabelContext[];
+          existing?: LabelContext[];
         },
         options?: {
           prompt?: string;
@@ -104,6 +105,17 @@ export const languageModelService = (model: LanguageModel) => {
           <labels>
           ${context.labels.map((label) => label.prompt).join('\n')}
           </labels>
+
+          ${
+            context.existing
+              ? dedent`
+            Here are the labels already applied to the PR:
+            <labels>
+            ${context.existing.map((label) => label.prompt).join('\n')}
+            </labels>
+            `
+              : ''
+          }
           
           ${
             options?.prompt
@@ -125,7 +137,8 @@ export const languageModelService = (model: LanguageModel) => {
           Use the given context to generate a list of labels that will be added to the PR.
           If no labels are relevant, return an empty list.
           DO NOT INCLUDE A LABEL if it is not relevant.
-          DO NOT USE MORE THAN ONE LABEL unless it is TRULY necessary (the PR fits multiple labels very well).
+          RARELY USE MORE THAN ONE LABEL except when it is necessary (the PR fits multiple labels very well).
+          PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
           `,
           prompt,
         });
@@ -136,6 +149,7 @@ export const languageModelService = (model: LanguageModel) => {
         context: {
           issue: IssueContext;
           labels: LabelContext[];
+          existing?: LabelContext[];
         },
         options?: {
           prompt?: string;
@@ -149,6 +163,17 @@ export const languageModelService = (model: LanguageModel) => {
           <labels>
           ${context.labels.map((label) => label.prompt).join('\n')}
           </labels>
+          
+          ${
+            context.existing
+              ? dedent`
+            Here are the labels already applied to the issue:
+            <labels>
+            ${context.existing.map((label) => label.prompt).join('\n')}
+            </labels>
+            `
+              : ''
+          }
           
           ${
             options?.prompt
@@ -170,7 +195,8 @@ export const languageModelService = (model: LanguageModel) => {
           Use the given context to generate a list of labels that will be added to the issue.
           If no labels are relevant, return an empty list.
           DO NOT INCLUDE A LABEL if it is not relevant.
-          DO NOT USE MORE THAN ONE LABEL unless it is TRULY necessary (the issue fits multiple labels very well).
+          RARELY USE MORE THAN ONE LABEL except when it is necessary (the issue fits multiple labels very well).
+          PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
           `,
           prompt,
         });

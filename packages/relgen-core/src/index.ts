@@ -157,7 +157,7 @@ const relgen = ({
         },
         options?: {
           write?: 'additive' | 'replacing' | false;
-          exclude?: string[];
+          exclude?: 'existing' | string[];
           prompt?: string;
         }
       ) => {
@@ -192,7 +192,9 @@ const relgen = ({
           `,
         });
 
-        const exclude = new Set(options?.exclude ?? []);
+        const exclude = new Set(
+          Array.isArray(options?.exclude) ? options.exclude : []
+        );
 
         const labelContexts = labels.data
           .filter((label) => !exclude.has(label.name))
@@ -209,6 +211,24 @@ const relgen = ({
             `,
             });
           });
+
+        const existingLabels = pr.data.labels.map((label) => {
+          return makeContext({
+            source: 'github',
+            type: 'label',
+            data: label,
+            prompt: dedent`
+            <label>
+            ${
+              typeof label === 'string'
+                ? `<name>${label}</name>`
+                : dedent`
+              <name>${label.name}</name>`
+            }
+            </label>
+          `,
+          });
+        });
 
         const diffContext = makeContext({
           source: 'github',
@@ -230,6 +250,8 @@ const relgen = ({
               diff: diffContext,
             },
             labels: labelContexts,
+            existing:
+              options?.exclude === 'existing' ? undefined : existingLabels,
           },
           {
             prompt: options?.prompt,
@@ -260,7 +282,7 @@ const relgen = ({
         },
         options?: {
           write?: 'additive' | 'replacing' | false;
-          exclude?: string[];
+          exclude?: 'existing' | string[];
           prompt?: string;
         }
       ) => {
@@ -290,7 +312,9 @@ const relgen = ({
           `,
         });
 
-        const exclude = new Set(options?.exclude ?? []);
+        const exclude = new Set(
+          Array.isArray(options?.exclude) ? options.exclude : []
+        );
 
         const labelContexts = labels.data
           .filter((label) => !exclude.has(label.name))
@@ -308,10 +332,30 @@ const relgen = ({
             });
           });
 
+        const existingLabels = issue.data.labels.map((label) => {
+          return makeContext({
+            source: 'github',
+            type: 'label',
+            data: label,
+            prompt: dedent`
+            <label>
+            ${
+              typeof label === 'string'
+                ? `<name>${label}</name>`
+                : dedent`
+              <name>${label.name}</name>`
+            }
+            </label>
+          `,
+          });
+        });
+
         const result = await llm.issue.label(
           {
             issue: issueContext,
             labels: labelContexts,
+            existing:
+              options?.exclude === 'existing' ? undefined : existingLabels,
           },
           {
             prompt: options?.prompt,
@@ -331,6 +375,9 @@ const relgen = ({
         }
 
         return result.object;
+      },
+      duplicates: async () => {
+        throw new Error('Not implemented');
       },
     },
   };
