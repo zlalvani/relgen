@@ -109,13 +109,16 @@ const relgen = ({
           </pr>`,
         });
 
+        // TODO: filter lockfiles from the diff
         const diffContext = makeContext({
           source: 'github',
           type: 'diff',
           data: diff,
           prompt: dedent`
           <diff>
-            <raw>${diff.data.$raw}</raw>
+            <raw>
+            ${diff.data.$raw}
+            </raw>
           </diff>,
           `,
         });

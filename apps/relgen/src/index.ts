@@ -37,7 +37,7 @@ const result = await relgen.pr.describe(
       - **Steps:** How to test this PR
       - **Expected Outcome:** What should happen
     `,
-    write: 'pr',
+    // write: 'pr',
   }
 );
 
