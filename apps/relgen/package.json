@@ -2,9 +2,11 @@
   "name": "relgen",
   "version": "0.0.1",
   "scripts": {
-    "build": "tsup src/index.ts --format esm",
-    "dev": "tsup src/index.ts --format esm --watch",
-    "typecheck": "tsc --noEmit"
+    "launch": "pnpm with-env node dist/index.mjs",
+    "build": "tsup src/index.ts --format esm --clean",
+    "dev": "tsup src/index.ts --format esm --watch . --watch \"../../packages/relgen-core/src/**\" --clean",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env -c --"
   },
   "module": "dist/index.mjs",
   "bin": {
@@ -19,6 +21,7 @@
   "files": ["dist"],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^20.11.24",
     "tsup": "^8.0.2",
     "typescript": "^5.3.3"
   },
