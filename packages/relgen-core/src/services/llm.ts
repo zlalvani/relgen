@@ -28,13 +28,18 @@ export const languageModelService = (model: LanguageModel) => {
       },
     },
     pr: {
-      describe: async (context: {
-        change: {
-          pr: PullRequestContext;
-          diff: DiffContext;
-        };
-        ticket?: TicketContext;
-      }) => {
+      describe: async (
+        context: {
+          change: {
+            pr: PullRequestContext;
+            diff: DiffContext;
+          };
+          ticket?: TicketContext;
+        },
+        options?: {
+          template?: string;
+        }
+      ) => {
         return await generateObject({
           model,
           schema: z.object({
@@ -44,12 +49,21 @@ export const languageModelService = (model: LanguageModel) => {
           You are an expert software engineer tasked with summarizing a pull request.
           Use the given context to generate a summary that will be added as a comment.
           Keep your output concise and relevant.
+          If provided, follow the template as closely as possible. 
           DO NOT ADD ANYTHING if you lack enough context.
           DO NOT ADD ANYTHING if the description is already good.
           `,
           prompt: dedent` 
           ${context.change.pr.prompt}
           ${context.change.diff.prompt}
+          ${
+            options?.template
+              ? dedent`
+              <template>
+              ${options.template}
+              </template>`
+              : ''
+          }
           `,
         });
       },

@@ -44,7 +44,6 @@ export type RelgenOptions = {
       };
     }
   >;
-  template?: string;
 };
 
 const relgen = ({
@@ -52,7 +51,6 @@ const relgen = ({
   deps,
 }: {
   args: {
-    template?: string;
     write: {
       release: boolean;
       pr: boolean;
@@ -74,15 +72,19 @@ const relgen = ({
       },
     },
     pr: {
-      describe: async ({
-        owner,
-        repo,
-        num,
-      }: {
-        owner: string;
-        repo: string;
-        num: number;
-      }) => {
+      describe: async (
+        args: {
+          owner: string;
+          repo: string;
+          num: number;
+        },
+        options?: {
+          write?: 'pr' | 'comment' | false;
+          template?: string;
+        }
+      ) => {
+        const { owner, repo, num } = args;
+
         const [pr, diff] = await Promise.all([
           github.rest.pulls.get({
             owner,
@@ -118,26 +120,30 @@ const relgen = ({
           `,
         });
 
-        const result = await llm.pr.describe({
-          change: {
-            pr: prContext,
-            diff: diffContext,
+        const result = await llm.pr.describe(
+          {
+            change: {
+              pr: prContext,
+              diff: diffContext,
+            },
           },
-        });
+          {
+            template: options?.template,
+          }
+        );
 
-        console.log(result.object);
+        if (options?.write === 'pr') {
+          await github.rest.pulls.update({
+            owner,
+            repo,
+            pull_number: num,
+            body: result.object.description,
+          });
+        }
 
-        // if (args.write.pr) {
-        //   await github.rest.pulls.update({
-        //     owner,
-        //     repo,
-        //     pull_number: num,
-        //     title: result.object.title,
-        //     body: result.object.description,
-        //   });
-        // }
+        return result.object;
       },
-      label: async (pullRequestUrl: string) => {
+      label: async () => {
         throw new Error('Not implemented');
       },
     },
@@ -150,11 +156,10 @@ const relgen = ({
 };
 
 export const createRelgen = (options: RelgenOptions) => {
-  const { model, template, integrations } = options;
+  const { model, integrations } = options;
 
   return relgen({
     args: {
-      template,
       write: {
         release: options.write?.release ?? false,
         pr: options.write?.pr ?? false,

@@ -33,6 +33,9 @@ importers:
       commander:
         specifier: ~12.0.0
         version: 12.0.0
+      dedent:
+        specifier: ^1.5.3
+        version: 1.5.3
       relgen-core:
         specifier: workspace:*
         version: link:../../packages/relgen-core

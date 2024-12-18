@@ -16,9 +16,12 @@
     "node": ">=20"
   },
   "dependencies": {
+    "dedent": "^1.5.3",
     "relgen-core": "workspace:*"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
