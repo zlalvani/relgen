@@ -50,7 +50,7 @@ importers:
         specifier: ^8.0.2
         version: 8.3.5(typescript@5.7.2)
       typescript:
-        specifier: ^5.3.3
+        specifier: ^5.7.2
         version: 5.7.2
 
   packages/relgen-core:
@@ -99,7 +99,7 @@ importers:
         specifier: ^8.0.2
         version: 8.3.5(typescript@5.7.2)
       typescript:
-        specifier: ^5.3.3
+        specifier: ^5.7.2
         version: 5.7.2
 
   tooling/typescript-config: {}

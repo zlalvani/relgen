@@ -63,17 +63,35 @@ console.log(result);
 //   {
 //     owner: 'zlalvani',
 //     repo: 'relgen',
-//     num: 8,
+//     num: 7,
 //   },
 //   {
 //     // write: 'replacing',
-//     write: false,
+//     write: 'replacing',
 //     exclude: ['help wanted'],
-//     // prompt: dedent`
-//     // Add the enhancement label as an extra if the PR is about improving something, e.g. testing + enhancement.
-//     // `,
+//     prompt: dedent`
+//     Add the testing label if the PR is related to testing.
+//     Add the enhancement label as an extra if the PR is about improving something, e.g. testing + enhancement.
+//     `,
 //   }
 // );
-// // Add the testing label if the PR is related to testing.
 
 // console.log(prLabelResult);
+
+// const releaseResult = await relgen.release.describe({
+//   owner: 'sindresorhus',
+//   repo: 'type-fest',
+// });
+
+const releaseResult = await relgen.release.describe(
+  {
+    owner: 'dottxt-ai',
+    repo: 'outlines',
+  },
+  {
+    include: 'all',
+    persona: 'leadership',
+  }
+);
+
+console.log(releaseResult);
