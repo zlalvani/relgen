@@ -68,8 +68,110 @@ const relgen = ({
 
   return {
     release: {
-      describe: async () => {
-        throw new Error('Not implemented');
+      describe: async (
+        args: {
+          owner: string;
+          repo: string;
+        },
+        options?: {
+          persona?: 'marketing' | 'engineering' | 'product' | 'leadership';
+          write?:
+            | {
+                name: string;
+                tag: string;
+              }
+            | false;
+          template?: string;
+          prompt?: string;
+          include?:
+            | 'all'
+            | {
+                issues?: boolean;
+                tickets?: boolean;
+              };
+        }
+      ) => {
+        const { owner, repo } = args;
+
+        const release = await github.rest.repos.getLatestRelease({
+          owner,
+          repo,
+        });
+
+        const newPrs = await github.rest.search.issuesAndPullRequests({
+          repo: {
+            owner,
+            repo,
+          },
+          type: 'pr',
+          status: 'merged',
+          mergedAfter: release?.data.published_at
+            ? new Date(release.data.published_at)
+            : undefined,
+        });
+
+        if (!newPrs.data.items.length) {
+          return null;
+        }
+
+        const issues =
+          options?.include === 'all' || options?.include?.issues
+            ? await github.graphql.repo.pull.batchClosingIssuesReferences({
+                owner,
+                repo,
+                nums: newPrs.data.items.map((pr) => pr.number),
+              })
+            : [];
+
+        const issueMap = issues.reduce((acc, curr) => {
+          acc.set(curr.num, curr.issues);
+          return acc;
+        }, new Map<number, (typeof issues)[number]['issues']>());
+
+        const changeContexts = newPrs.data.items.map((pr) => {
+          // Only take the first linked issue for now
+          const issue = issueMap.get(pr.number)?.[0];
+
+          return {
+            pr: makeContext({
+              source: 'github',
+              type: 'pr',
+              data: pr,
+              prompt: dedent`
+              <pr>
+                <title>${pr.title}</title>
+                <body>${pr.body}</body>
+              </pr>
+              `,
+            }),
+            issue: issue
+              ? makeContext({
+                  source: 'github',
+                  type: 'issue',
+                  data: issue,
+                  prompt: dedent`
+                  <issue>
+                    <title>${issue.title}</title>
+                    <body>${issue.body}</body>
+                  </issue>
+                  `,
+                })
+              : undefined,
+          };
+        });
+
+        const result = await llm.release.describe(
+          {
+            changes: changeContexts,
+          },
+          {
+            persona: options?.persona,
+            template: options?.template,
+            prompt: options?.prompt,
+          }
+        );
+
+        return result.object;
       },
     },
     pr: {
@@ -88,17 +190,21 @@ const relgen = ({
         const { owner, repo, num } = args;
 
         const [pr, diff] = await Promise.all([
-          github.rest.pulls.get({
+          github.$rest.pulls.get({
             owner,
             repo,
             pull_number: num,
           }),
-          github.custom.pulls.diff({
+          github.rest.pulls.diff({
             owner,
             repo,
             num,
           }),
         ]);
+
+        if (!diff) {
+          throw new Error('No diff found');
+        }
 
         const prContext = makeContext({
           source: 'github',
@@ -139,7 +245,7 @@ const relgen = ({
         );
 
         if (options?.write === 'pr') {
-          await github.rest.pulls.update({
+          await github.$rest.pulls.update({
             owner,
             repo,
             pull_number: num,
@@ -164,21 +270,25 @@ const relgen = ({
         const { owner, repo, num } = args;
 
         const [labels, pr, diff] = await Promise.all([
-          github.rest.issues.listLabelsForRepo({
+          github.$rest.issues.listLabelsForRepo({
             owner,
             repo,
           }),
-          github.rest.pulls.get({
+          github.$rest.pulls.get({
             owner,
             repo,
             pull_number: num,
           }),
-          github.custom.pulls.diff({
+          github.rest.pulls.diff({
             owner,
             repo,
             num,
           }),
         ]);
+
+        if (!diff) {
+          throw new Error('No diff found');
+        }
 
         const prContext = makeContext({
           source: 'github',
@@ -259,7 +369,7 @@ const relgen = ({
         );
 
         if (options?.write) {
-          await github.rest.issues.update({
+          await github.$rest.issues.update({
             owner,
             repo,
             issue_number: num,
@@ -289,11 +399,11 @@ const relgen = ({
         const { owner, repo, num } = args;
 
         const [labels, issue] = await Promise.all([
-          github.rest.issues.listLabelsForRepo({
+          github.$rest.issues.listLabelsForRepo({
             owner,
             repo,
           }),
-          github.rest.issues.get({
+          github.$rest.issues.get({
             owner,
             repo,
             issue_number: num,
@@ -363,7 +473,7 @@ const relgen = ({
         );
 
         if (options?.write) {
-          await github.rest.issues.update({
+          await github.$rest.issues.update({
             owner,
             repo,
             issue_number: num,

@@ -4,7 +4,7 @@
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
-    "dev": "tsup src/index.ts --format esm --watch ./src --watch \"../../packages/relgen-core/src/**\" --clean --minify",
+    "dev": "tsup src/index.ts --format esm --watch ./src --watch \"../../packages/relgen-core/src/**\" --sourcemap --clean",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env -c --"
   },
@@ -24,7 +24,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
     "tsup": "^8.0.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.2"
   },
   "peerDependencies": {
     "commander": "~12.0.0"

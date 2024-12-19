@@ -15,17 +15,104 @@ import type {
 export const languageModelService = (model: LanguageModel) => {
   return {
     release: {
-      describe: async (context: {
-        changes: {
-          pr: PullRequestContext;
-        }[];
-        tickets?: TicketContext[];
-      }) => {
+      describe: async (
+        context: {
+          changes: {
+            pr: PullRequestContext;
+            issue?: IssueContext;
+            ticket?: TicketContext;
+          }[];
+          tickets?: TicketContext[];
+        },
+        options?: {
+          persona?: 'marketing' | 'engineering' | 'product' | 'leadership';
+          template?: string;
+          prompt?: string;
+        }
+      ) => {
         if (!context.changes[0]) {
           throw new Error('No pull requests found');
         }
 
-        return await Promise.resolve({});
+        let system: string;
+
+        switch (options?.persona) {
+          case 'marketing': {
+            system = dedent`
+            You are a highly experienced product manager tasked with summarizing the latest release for use in marketing materials.
+            Use the given context to generate a summary that will be used in marketing materials.
+            Keep your output concise and relevant.
+            `;
+            break;
+          }
+          case 'product': {
+            system = dedent`
+            You are a highly experienced product manager tasked with summarizing the latest release for .
+            Use the given context to generate a summary that will be used in a product update.
+            Keep your output concise and relevant.
+            `;
+            break;
+          }
+          case 'leadership': {
+            system = dedent`
+            You are a highly product manager tasked with summarizing the latest release for leadership.
+            Use the given context to generate a summary that will be shown to company leadership.
+            Keep your output concise and relevant.
+            `;
+            break;
+          }
+          default: {
+            system = dedent`
+            You are an expert software engineer tasked with summarizing the latest release for other engineers.
+            Use the given context to generate a summary that will be shown on the repository releases page.
+            Keep your output concise and relevant.
+            `;
+            break;
+          }
+        }
+
+        const prompt = dedent`
+        Here's the relevant context:
+        ${context.changes
+          .map(
+            (change) => dedent`
+            <change>
+            ${change.pr.prompt}
+            ${change.ticket?.prompt || ''}
+            ${change.issue?.prompt || ''}
+            </change>
+            `
+          )
+          .join('\n')}
+
+        ${
+          options?.template
+            ? dedent`
+              Here's a template to use for your response:
+              <template>
+              ${options.template}
+              </template>`
+            : ''
+        }
+
+        ${
+          options?.prompt
+            ? dedent`
+            Extra instructions:
+            ${options.prompt}
+            `
+            : ''
+        }
+        `;
+
+        return await generateObject({
+          model,
+          schema: z.object({
+            description: z.string(),
+          }),
+          system,
+          prompt,
+        });
       },
     },
     pr: {
