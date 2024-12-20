@@ -45,6 +45,7 @@ export const languageModelService = (
             system = dedent`
             You are a highly experienced product manager tasked with summarizing the latest release for use in marketing materials.
             Use the given context to generate a summary that will be used in marketing materials.
+            Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
             `;
             break;
@@ -53,6 +54,7 @@ export const languageModelService = (
             system = dedent`
             You are a highly experienced product manager tasked with summarizing the latest release for .
             Use the given context to generate a summary that will be used in a product update.
+            Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
             `;
             break;
@@ -61,6 +63,7 @@ export const languageModelService = (
             system = dedent`
             You are a highly product manager tasked with summarizing the latest release for leadership.
             Use the given context to generate a summary that will be shown to company leadership.
+            Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
             `;
             break;
@@ -69,6 +72,7 @@ export const languageModelService = (
             system = dedent`
             You are an expert software engineer tasked with summarizing the latest release for other engineers.
             Use the given context to generate a summary that will be shown on the repository releases page.
+            Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
             `;
             break;
@@ -109,7 +113,8 @@ export const languageModelService = (
         }
         `;
 
-        logger.debug({ system, prompt });
+        logger.debug({ message: system });
+        logger.debug({ message: prompt });
 
         return await generateObject({
           model,
@@ -140,6 +145,7 @@ export const languageModelService = (
         Use the given context to generate a summary that will be added as a comment.
         Keep your output concise and relevant.
         If provided, follow the template as closely as possible.
+        Use proper English grammar and punctuation like a native speaker.
         DO NOT RETURN A DESCRIPTION if you lack enough context.
         DO NOT RETURN A DESCRIPTION if the description is already good.
         `;
@@ -169,7 +175,8 @@ export const languageModelService = (
           }
           `;
 
-        logger.debug({ system, prompt });
+        logger.debug({ message: system });
+        logger.debug({ message: prompt });
 
         return await generateObject({
           model,
@@ -197,6 +204,7 @@ export const languageModelService = (
         You are an expert software engineer tasked with labeling a pull request.
         Use the given context to generate a list of labels that will be added to the PR.
         If no labels are relevant, return an empty list.
+        Use proper English grammar and punctuation like a native speaker.
         DO NOT INCLUDE A LABEL if it is not relevant.
         RARELY USE MORE THAN ONE LABEL except when it is necessary (the PR fits multiple labels very well).
         PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
@@ -233,7 +241,8 @@ export const languageModelService = (
           }
           `;
 
-        logger.debug({ system, prompt });
+        logger.debug({ message: system });
+        logger.debug({ message: prompt });
 
         return await generateObject({
           model,
@@ -260,6 +269,7 @@ export const languageModelService = (
         You are an expert software engineer tasked with labeling an issue.
         Use the given context to generate a list of labels that will be added to the issue.
         If no labels are relevant, return an empty list.
+        Use proper English grammar and punctuation like a native speaker.
         DO NOT INCLUDE A LABEL if it is not relevant.
         RARELY USE MORE THAN ONE LABEL except when it is necessary (the issue fits multiple labels very well).
         PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
@@ -295,7 +305,8 @@ export const languageModelService = (
           }
           `;
 
-        logger.debug({ system, prompt });
+        logger.debug({ message: system });
+        logger.debug({ message: prompt });
 
         return await generateObject({
           model,

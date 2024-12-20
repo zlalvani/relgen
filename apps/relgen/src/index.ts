@@ -99,6 +99,7 @@ const cli = program
               target: 'pino-pretty',
               options: {
                 colorize: true,
+                messageKey: 'message',
               },
             },
           })
@@ -279,7 +280,7 @@ pr.command('describe')
   .option('--prompt <prompt>', 'prompt file')
   .description('describe a pull request')
   .action(async (pr, options) => {
-    // TODO: support only numbers when we have gh cli support
+    // TODO: support numbers alone when we have gh cli support
     const { owner, repo, num } = parsePrUrl(new URL(pr));
 
     const { write, template: templateFile, prompt: promptFile } = options;
