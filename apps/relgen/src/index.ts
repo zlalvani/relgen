@@ -155,7 +155,64 @@ const remote = cli
     });
   });
 
+const parseIssueUrl = (url: URL) => {
+  const [owner, repo, , number] = url.pathname.split('/').filter(Boolean);
+
+  if (!owner || !repo || !number) {
+    throw new Error('Invalid pull request URL');
+  }
+
+  return { owner, repo, num: toInt(number) };
+};
+
+const parseIssueArg = (arg: string) => {
+  try {
+    return parseIssueUrl(new URL(arg));
+  } catch {
+    return toInt(arg, null);
+  }
+};
+
 const issue = remote.command('issue').description('tasks related to issues');
+
+issue
+  .command('label')
+  .argument('<issue>', 'issue')
+  .addOption(
+    new Option('-w, --write <write>', 'update the labels').choices([
+      'add',
+      'set',
+    ] as const)
+  )
+  .option(
+    '--exclude <exclude>',
+    'exclude "existing" or comma separated list',
+    (val) => (val === 'existing' ? ('existing' as const) : val.split(','))
+  )
+  .description('label an issue')
+  .action(async (issue, options) => {
+    const { owner, repo, num } = parseIssueUrl(new URL(issue));
+
+    const { write, exclude } = options;
+
+    const result = await relgen.remote.issue.label(
+      {
+        owner,
+        repo,
+        num,
+      },
+      {
+        write,
+        exclude,
+      }
+    );
+
+    if (result.labels.length > 0) {
+      log(result.labels.join(', '));
+    } else {
+      log(kleur.red('No labels added'));
+    }
+  });
 
 const parseRepoPath = (path: string) => {
   const [owner, repo] = path.split('/').slice(-2);
@@ -194,6 +251,7 @@ release
   )
   .description('describe a release')
   .action(async (repoOrReleasePath, options) => {
+    // TODO: support existing release summaries
     if (repoOrReleasePath.includes('/release/')) {
       throw new Error('Not implemented');
     }
@@ -250,24 +308,6 @@ release
 
 const pr = remote.command('pr').description('tasks related to pull requests');
 
-const parsePrUrl = (url: URL) => {
-  const [owner, repo, , number] = url.pathname.split('/').filter(Boolean);
-
-  if (!owner || !repo || !number) {
-    throw new Error('Invalid pull request URL');
-  }
-
-  return { owner, repo, num: toInt(number) };
-};
-
-const parsePrArg = (arg: string) => {
-  try {
-    return parsePrUrl(new URL(arg));
-  } catch {
-    return toInt(arg, null);
-  }
-};
-
 pr.command('describe')
   .argument('<pr>', 'pull request')
   .addOption(
@@ -281,7 +321,7 @@ pr.command('describe')
   .description('describe a pull request')
   .action(async (pr, options) => {
     // TODO: support numbers alone when we have gh cli support
-    const { owner, repo, num } = parsePrUrl(new URL(pr));
+    const { owner, repo, num } = parseIssueUrl(new URL(pr));
 
     const { write, template: templateFile, prompt: promptFile } = options;
 
@@ -313,6 +353,44 @@ pr.command('describe')
       log(result.description);
     } else {
       log(kleur.red('No description was generated'));
+    }
+  });
+
+pr.command('label')
+  .argument('<pr>', 'pull request')
+  .addOption(
+    new Option('-w, --write <write>', 'update the labels').choices([
+      'add',
+      'set',
+    ] as const)
+  )
+  .option(
+    '--exclude <exclude>',
+    'exclude "existing" or comma separated list',
+    (val) => (val === 'existing' ? ('existing' as const) : val.split(','))
+  )
+  .description('label a pull request')
+  .action(async (pr, options) => {
+    const { owner, repo, num } = parseIssueUrl(new URL(pr));
+
+    const { write, exclude } = options;
+
+    const result = await relgen.remote.pr.label(
+      {
+        owner,
+        repo,
+        num,
+      },
+      {
+        write,
+        exclude,
+      }
+    );
+
+    if (result.labels.length > 0) {
+      log(result.labels.join(', '));
+    } else {
+      log(kleur.red('No labels added'));
     }
   });
 

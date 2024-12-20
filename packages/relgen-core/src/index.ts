@@ -372,7 +372,7 @@ const relgen = ({
             num: number;
           },
           options?: {
-            write?: 'additive' | 'replacing' | false;
+            write?: 'add' | 'set' | false;
             exclude?: 'existing' | string[];
             prompt?: string;
           }
@@ -501,7 +501,7 @@ const relgen = ({
               repo,
               issue_number: num,
               labels:
-                options.write === 'replacing'
+                options.write === 'set'
                   ? result.object.labels
                   : unique([...pr.data.labels, ...result.object.labels]),
             });
@@ -518,7 +518,7 @@ const relgen = ({
             num: number;
           },
           options?: {
-            write?: 'additive' | 'replacing' | false;
+            write?: 'add' | 'set' | false;
             exclude?: 'existing' | string[];
             prompt?: string;
           }
@@ -604,7 +604,7 @@ const relgen = ({
               repo,
               issue_number: num,
               labels:
-                options.write === 'replacing'
+                options.write === 'set'
                   ? result.object.labels
                   : unique([...issue.data.labels, ...result.object.labels]),
             });
