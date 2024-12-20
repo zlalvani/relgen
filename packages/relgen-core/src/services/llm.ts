@@ -2,6 +2,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { type LanguageModel, generateObject } from 'ai';
 import dedent from 'dedent';
+import type pino from 'pino';
 import { z } from 'zod';
 import type { RelgenOptions } from '..';
 import type {
@@ -12,7 +13,10 @@ import type {
   TicketContext,
 } from '../contexts';
 
-export const languageModelService = (model: LanguageModel) => {
+export const languageModelService = (
+  model: LanguageModel,
+  logger: pino.Logger
+) => {
   return {
     release: {
       describe: async (
@@ -105,6 +109,8 @@ export const languageModelService = (model: LanguageModel) => {
         }
         `;
 
+        logger.debug({ system, prompt });
+
         return await generateObject({
           model,
           schema: z.object({
@@ -129,6 +135,15 @@ export const languageModelService = (model: LanguageModel) => {
           prompt?: string;
         }
       ) => {
+        const system = dedent`
+        You are an expert software engineer tasked with summarizing a pull request.
+        Use the given context to generate a summary that will be added as a comment.
+        Keep your output concise and relevant.
+        If provided, follow the template as closely as possible.
+        DO NOT RETURN A DESCRIPTION if you lack enough context.
+        DO NOT RETURN A DESCRIPTION if the description is already good.
+        `;
+
         const prompt = dedent`
           Here's the relevant context:
           ${context.change.pr.prompt}
@@ -154,19 +169,14 @@ export const languageModelService = (model: LanguageModel) => {
           }
           `;
 
+        logger.debug({ system, prompt });
+
         return await generateObject({
           model,
           schema: z.object({
             description: z.string().optional(),
           }),
-          system: dedent`
-          You are an expert software engineer tasked with summarizing a pull request.
-          Use the given context to generate a summary that will be added as a comment.
-          Keep your output concise and relevant.
-          If provided, follow the template as closely as possible.
-          DO NOT RETURN A DESCRIPTION if you lack enough context.
-          DO NOT RETURN A DESCRIPTION if the description is already good.
-          `,
+          system,
           prompt,
         });
       },
@@ -183,6 +193,15 @@ export const languageModelService = (model: LanguageModel) => {
           prompt?: string;
         }
       ) => {
+        const system = dedent`
+        You are an expert software engineer tasked with labeling a pull request.
+        Use the given context to generate a list of labels that will be added to the PR.
+        If no labels are relevant, return an empty list.
+        DO NOT INCLUDE A LABEL if it is not relevant.
+        RARELY USE MORE THAN ONE LABEL except when it is necessary (the PR fits multiple labels very well).
+        PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
+        `;
+
         const prompt = dedent`
           Here's the PR context:
           ${context.change.pr.prompt}
@@ -214,19 +233,14 @@ export const languageModelService = (model: LanguageModel) => {
           }
           `;
 
+        logger.debug({ system, prompt });
+
         return await generateObject({
           model,
           schema: z.object({
             labels: z.array(z.string()),
           }),
-          system: dedent`
-          You are an expert software engineer tasked with labeling a pull request.
-          Use the given context to generate a list of labels that will be added to the PR.
-          If no labels are relevant, return an empty list.
-          DO NOT INCLUDE A LABEL if it is not relevant.
-          RARELY USE MORE THAN ONE LABEL except when it is necessary (the PR fits multiple labels very well).
-          PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
-          `,
+          system,
           prompt,
         });
       },
@@ -242,6 +256,15 @@ export const languageModelService = (model: LanguageModel) => {
           prompt?: string;
         }
       ) => {
+        const system = dedent`
+        You are an expert software engineer tasked with labeling an issue.
+        Use the given context to generate a list of labels that will be added to the issue.
+        If no labels are relevant, return an empty list.
+        DO NOT INCLUDE A LABEL if it is not relevant.
+        RARELY USE MORE THAN ONE LABEL except when it is necessary (the issue fits multiple labels very well).
+        PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
+        `;
+
         const prompt = dedent`
           Here's the issue context:
           ${context.issue.prompt}
@@ -272,19 +295,14 @@ export const languageModelService = (model: LanguageModel) => {
           }
           `;
 
+        logger.debug({ system, prompt });
+
         return await generateObject({
           model,
           schema: z.object({
             labels: z.array(z.string()),
           }),
-          system: dedent`
-          You are an expert software engineer tasked with labeling an issue.
-          Use the given context to generate a list of labels that will be added to the issue.
-          If no labels are relevant, return an empty list.
-          DO NOT INCLUDE A LABEL if it is not relevant.
-          RARELY USE MORE THAN ONE LABEL except when it is necessary (the issue fits multiple labels very well).
-          PRESERVE EXISTING LABELS if they are still relevant, even if it means using multiple labels.
-          `,
+          system,
           prompt,
         });
       },
@@ -292,18 +310,23 @@ export const languageModelService = (model: LanguageModel) => {
   };
 };
 
-export const createLanguageModelService = (options: RelgenOptions['model']) => {
+export const createLanguageModelService = (
+  options: RelgenOptions['llm'],
+  logger: pino.Logger
+) => {
   const { apiKey } = options;
 
   switch (options.provider) {
     case 'openai': {
       return languageModelService(
-        createOpenAI({ apiKey }).chat(options.modelId)
+        createOpenAI({ apiKey }).chat(options.model),
+        logger
       );
     }
     case 'anthropic': {
       return languageModelService(
-        createAnthropic({ apiKey }).languageModel(options.modelId)
+        createAnthropic({ apiKey }).languageModel(options.model),
+        logger
       );
     }
     default: {
