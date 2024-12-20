@@ -70,8 +70,8 @@ export const languageModelService = (
           }
           default: {
             system = dedent`
-            You are an expert software engineer tasked with summarizing the latest release for other engineers.
-            Use the given context to generate a summary that will be shown on the repository releases page.
+            You are an expert software engineer tasked with creating a detailed changelog of the release for other engineers.
+            Use the given context to generate release notes that will be shown on the repository releases page.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
             `;

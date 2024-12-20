@@ -149,7 +149,7 @@ const relgen = ({
     linear?: LinearClient;
   };
 }) => {
-  const { llm, github } = deps;
+  const { llm, github, logger } = deps;
 
   return {
     remote: {
