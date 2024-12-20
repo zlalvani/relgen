@@ -16,17 +16,23 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^12.1.0",
+    "@inquirer/prompts": "^7.2.0",
+    "commander": "^12.1.0",
     "dedent": "^1.5.3",
+    "kleur": "^4.1.5",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.0",
+    "radashi": "^12.3.0",
     "relgen-core": "workspace:*"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
     "tsup": "^8.0.2",
     "typescript": "^5.7.2"
-  },
-  "peerDependencies": {
-    "commander": "~12.0.0"
   }
 }

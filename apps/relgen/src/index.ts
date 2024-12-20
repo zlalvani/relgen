@@ -1,97 +1,319 @@
-import dedent from 'dedent';
-import { createRelgen } from 'relgen-core';
+import { readFile } from 'node:fs/promises';
+import { URL } from 'node:url';
+import { Option, program } from '@commander-js/extra-typings';
+import { password, select } from '@inquirer/prompts';
+import kleur from 'kleur';
+import pino from 'pino';
+import { toInt } from 'radashi';
+import { type Relgen, createRelgen } from 'relgen-core';
 
-const relgen = createRelgen({
-  model: {
-    apiKey: process.env.OPENAI_API_KEY ?? '',
-    provider: 'openai',
-    modelId: 'gpt-4o-mini',
-  },
-  integrations: {
-    github: {
-      token: process.env.GH_TOKEN ?? '',
-    },
-    linear: {
-      token: 'my-linear',
-    },
-  },
-});
+const providerChoices = ['openai', 'anthropic'] as const;
+const openaiModelChoices = ['gpt-4o-mini'] as const;
+const anthropicModelChoices = ['claude-3-5-sonnet-latest'] as const;
 
-const result = await relgen.pr.describe(
-  {
-    owner: 'zlalvani',
-    repo: 'relgen',
-    num: 8,
-  },
-  {
-    template: dedent`
-      ### Summary
-      - **Changes:** What the PR updates
-      - **Approach:** How the PR solves the problem
+const providerModels = {
+  openai: openaiModelChoices,
+  anthropic: anthropicModelChoices,
+} as const;
 
-      ### Testing
-      - **Steps:** How to test this PR
-    `,
-    write: 'pr',
+let relgen: Relgen;
+
+let resolvedOpts: {
+  provider: (typeof providerChoices)[number];
+  model:
+    | (typeof openaiModelChoices)[number]
+    | (typeof anthropicModelChoices)[number];
+  llmToken: string;
+  logger?: pino.Logger;
+};
+
+const log = (message: string) => {
+  if (!cli.opts().silent) {
+    console.log(message);
   }
-);
+};
 
-console.log(result);
+const cli = program
+  .name('relgen')
+  .version('0.0.1')
+  .option('-t, --llm-token <token>', 'llm token')
+  .option('-s, --silent', 'do not print output')
+  .option('-c, --config <config>', 'config file')
+  .option('-v, --verbose', 'verbose output (debug statements)')
+  .addOption(
+    new Option('-p, --provider <provider>', 'llm provider').choices(
+      providerChoices
+    )
+  )
+  .addOption(
+    new Option('-m, --model <model>', 'llm model').choices([
+      ...openaiModelChoices,
+      ...anthropicModelChoices,
+    ])
+  )
+  .hook('preAction', async () => {
+    let { llmToken, provider, model, verbose } = cli.opts();
 
-// const labelResult = await relgen.issue.label(
-//   {
-//     owner: 'sindresorhus',
-//     repo: 'type-fest',
-//     num: 950,
-//   },
-//   {
-//     // write: 'replacing',
-//     write: false,
-//     exclude: ['help wanted'],
-//     prompt: dedent`
-//     Prefer the "type addition" label instead of "enhancement" if the issue is suggesting a new type.
-//     Label something as a question if it's just asking a question or the user seems confused.
-//     `,
-//   }
-// );
+    if (!provider) {
+      provider = await select({
+        message: 'Select LLM provider',
+        choices: providerChoices.map((provider) => ({
+          value: provider,
+          name: provider,
+        })),
+      });
+    }
 
-// // Prefer the "type addition" label instead of "enhancement" if the PR adds a new type definition.
-// // Don't label something as a bug if it's just asking a question or the user seems confused.
-// console.log(labelResult);
+    if (!model) {
+      model = await select({
+        message: 'Select LLM model',
+        choices: providerModels[provider].map((model) => ({
+          value: model,
+          name: model,
+        })),
+      });
+    }
 
-// const prLabelResult = await relgen.pr.label(
-//   {
-//     owner: 'zlalvani',
-//     repo: 'relgen',
-//     num: 7,
-//   },
-//   {
-//     // write: 'replacing',
-//     write: 'replacing',
-//     exclude: ['help wanted'],
-//     prompt: dedent`
-//     Add the testing label if the PR is related to testing.
-//     Add the enhancement label as an extra if the PR is about improving something, e.g. testing + enhancement.
-//     `,
-//   }
-// );
+    if (!llmToken) {
+      if (provider === 'openai') {
+        llmToken = process.env.OPENAI_API_KEY;
+      } else if (provider === 'anthropic') {
+        llmToken = process.env.ANTHROPIC_API_KEY;
+      }
 
-// console.log(prLabelResult);
+      if (!llmToken) {
+        llmToken = await password({
+          message: 'Enter LLM token',
+        });
+      }
+    }
 
-// const releaseResult = await relgen.release.describe({
-//   owner: 'sindresorhus',
-//   repo: 'type-fest',
-// });
+    resolvedOpts = {
+      provider,
+      model,
+      llmToken,
+      logger: verbose
+        ? pino({
+            level: 'debug',
+            transport: {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                messageKey: 'message',
+              },
+            },
+          })
+        : undefined,
+    };
 
-const releaseResult = await relgen.release.describe(
-  {
-    owner: 'dottxt-ai',
-    repo: 'outlines',
-  },
-  {
-    include: 'all',
-    persona: 'leadership',
+    relgen = createRelgen({
+      llm: {
+        apiKey: llmToken,
+        provider,
+        model,
+      },
+      logger: resolvedOpts.logger,
+      integrations: {
+        github: {
+          token: '', // TODO: don't require github token
+        },
+      },
+    });
+  });
+
+const remote = cli
+  .command('remote')
+  .option('-g, --github <token>', 'github token')
+  .description('tasks relating to the code hosting platform')
+  .hook('preAction', async () => {
+    let { github: githubToken } = remote.opts();
+
+    const { provider, model, llmToken, logger } = resolvedOpts;
+
+    if (!githubToken) {
+      githubToken = process.env.GH_TOKEN;
+
+      if (!githubToken) {
+        githubToken = await password({
+          message: 'Enter GitHub token',
+        });
+      }
+    }
+
+    relgen = createRelgen({
+      llm: {
+        apiKey: llmToken,
+        provider,
+        model,
+      },
+      logger,
+      integrations: {
+        github: {
+          token: githubToken,
+        },
+      },
+    });
+  });
+
+const issue = remote.command('issue').description('tasks related to issues');
+
+const parseRepoPath = (path: string) => {
+  const [owner, repo] = path.split('/').slice(-2);
+
+  if (!owner || !repo) {
+    throw new Error('Invalid repository URL');
   }
-);
 
-console.log(releaseResult);
+  return { owner, repo };
+};
+
+const release = remote
+  .command('release')
+  .description('tasks related to releases');
+
+release
+  .command('describe')
+  .argument('<repo>', 'repository or specific release')
+  .addOption(
+    new Option('--persona <persona>', 'persona').choices([
+      'marketing',
+      'engineering',
+      'product',
+      'leadership',
+    ] as const)
+  )
+  .option('--template <template>', 'template file')
+  .option('--prompt <prompt>', 'prompt file')
+  .addOption(
+    new Option('--include <include...>', 'include').choices([
+      'issues',
+      'labels',
+      'tickets',
+      'all',
+    ] as const)
+  )
+  .description('describe a release')
+  .action(async (repoOrReleasePath, options) => {
+    if (repoOrReleasePath.includes('/release/')) {
+      throw new Error('Not implemented');
+    }
+
+    const { owner, repo } = parseRepoPath(repoOrReleasePath);
+
+    const {
+      persona,
+      template: templateFile,
+      prompt: promptFile,
+      include: includeArray,
+    } = options;
+
+    let template: string | undefined;
+    let prompt: string | undefined;
+
+    if (templateFile) {
+      template = await readFile(templateFile, 'utf-8');
+    }
+
+    if (promptFile) {
+      prompt = await readFile(promptFile, 'utf-8');
+    }
+
+    const includeSet = new Set(includeArray);
+
+    const include = includeSet.has('all')
+      ? 'all'
+      : {
+          issues: includeSet.has('issues'),
+          tickets: includeSet.has('tickets'),
+          labels: includeSet.has('labels'),
+        };
+
+    const result = await relgen.remote.release.describe(
+      {
+        owner,
+        repo,
+      },
+      {
+        include,
+        persona,
+        template,
+        prompt,
+      }
+    );
+
+    if (result) {
+      log(result.description);
+    } else {
+      log(kleur.red('No changes found'));
+    }
+  });
+
+const pr = remote.command('pr').description('tasks related to pull requests');
+
+const parsePrUrl = (url: URL) => {
+  const [owner, repo, , number] = url.pathname.split('/').filter(Boolean);
+
+  if (!owner || !repo || !number) {
+    throw new Error('Invalid pull request URL');
+  }
+
+  return { owner, repo, num: toInt(number) };
+};
+
+const parsePrArg = (arg: string) => {
+  try {
+    return parsePrUrl(new URL(arg));
+  } catch {
+    return toInt(arg, null);
+  }
+};
+
+pr.command('describe')
+  .argument('<pr>', 'pull request')
+  .addOption(
+    new Option('-w, --write <write>', 'persona').choices([
+      'pr',
+      'comment',
+    ] as const)
+  )
+  .option('--template <template>', 'template file')
+  .option('--prompt <prompt>', 'prompt file')
+  .description('describe a pull request')
+  .action(async (pr, options) => {
+    // TODO: support numbers alone when we have gh cli support
+    const { owner, repo, num } = parsePrUrl(new URL(pr));
+
+    const { write, template: templateFile, prompt: promptFile } = options;
+
+    let template: string | undefined;
+    let prompt: string | undefined;
+
+    if (templateFile) {
+      template = await readFile(templateFile, 'utf-8');
+    }
+
+    if (promptFile) {
+      prompt = await readFile(promptFile, 'utf-8');
+    }
+
+    const result = await relgen.remote.pr.describe(
+      {
+        owner,
+        repo,
+        num,
+      },
+      {
+        write,
+        template,
+        prompt,
+      }
+    );
+
+    if (result.description) {
+      log(result.description);
+    } else {
+      log(kleur.red('No description was generated'));
+    }
+  });
+
+await cli.parseAsync();

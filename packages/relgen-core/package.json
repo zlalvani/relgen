@@ -16,6 +16,7 @@
     "dedent": "^1.5.3",
     "gitdiff-parser": "^0.3.1",
     "octokit": "^4.0.2",
+    "pino": "^9.5.0",
     "radashi": "^12.3.0",
     "simple-git": "^3.27.0",
     "type-fest": "^4.30.2",
