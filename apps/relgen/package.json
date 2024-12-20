@@ -16,7 +16,10 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@commander-js/extra-typings": "^12.1.0",
     "dedent": "^1.5.3",
+    "inquirer": "^12.2.0",
+    "radashi": "^12.3.0",
     "relgen-core": "workspace:*"
   },
   "files": ["dist"],
