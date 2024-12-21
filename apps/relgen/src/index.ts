@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { URL } from 'node:url';
 import { Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
@@ -6,15 +6,14 @@ import kleur from 'kleur';
 import pino from 'pino';
 import { toInt } from 'radashi';
 import { type Relgen, createRelgen } from 'relgen-core';
-
-const providerChoices = ['openai', 'anthropic'] as const;
-const openaiModelChoices = ['gpt-4o-mini'] as const;
-const anthropicModelChoices = ['claude-3-5-sonnet-latest'] as const;
-
-const providerModels = {
-  openai: openaiModelChoices,
-  anthropic: anthropicModelChoices,
-} as const;
+import {
+  type Config,
+  anthropicModelChoices,
+  configSchema,
+  openaiModelChoices,
+  providerChoices,
+  providerModels,
+} from './config/schema';
 
 let relgen: Relgen;
 
@@ -26,6 +25,8 @@ let resolvedOpts: {
   llmToken: string;
   logger?: pino.Logger;
 };
+
+let configFile: Config | undefined;
 
 const log = (message: string) => {
   if (!cli.opts().silent) {
@@ -52,41 +53,53 @@ const cli = program
     ])
   )
   .hook('preAction', async () => {
-    let { llmToken, provider, model, verbose } = cli.opts();
+    let { llmToken, provider, model, verbose, config } = cli.opts();
 
-    if (!provider) {
-      provider = await select({
+    if (!config) {
+      try {
+        await access('.relgen.json');
+        config = '.relgen.json';
+      } catch {
+        // ignore
+      }
+    }
+
+    if (config) {
+      configFile = configSchema.parse(
+        JSON.parse(await readFile(config, 'utf-8'))
+      );
+    }
+
+    provider =
+      provider ||
+      configFile?.llm?.provider ||
+      (await select({
         message: 'Select LLM provider',
         choices: providerChoices.map((provider) => ({
           value: provider,
           name: provider,
         })),
-      });
-    }
+      }));
 
-    if (!model) {
-      model = await select({
+    model =
+      model ||
+      configFile?.llm?.model ||
+      (await select({
         message: 'Select LLM model',
         choices: providerModels[provider].map((model) => ({
           value: model,
           name: model,
         })),
-      });
-    }
+      }));
 
-    if (!llmToken) {
-      if (provider === 'openai') {
-        llmToken = process.env.OPENAI_API_KEY;
-      } else if (provider === 'anthropic') {
-        llmToken = process.env.ANTHROPIC_API_KEY;
-      }
-
-      if (!llmToken) {
-        llmToken = await password({
-          message: 'Enter LLM token',
-        });
-      }
-    }
+    llmToken =
+      llmToken ||
+      (provider === 'openai' && process.env.OPENAI_API_KEY) ||
+      (provider === 'anthropic' && process.env.ANTHROPIC_API_KEY) ||
+      configFile?.llm?.apiKey ||
+      (await password({
+        message: 'Enter LLM token',
+      }));
 
     resolvedOpts = {
       provider,
@@ -130,15 +143,13 @@ const remote = cli
 
     const { provider, model, llmToken, logger } = resolvedOpts;
 
-    if (!githubToken) {
-      githubToken = process.env.GH_TOKEN;
-
-      if (!githubToken) {
-        githubToken = await password({
-          message: 'Enter GitHub token',
-        });
-      }
-    }
+    githubToken =
+      githubToken ||
+      configFile?.integrations?.github?.token ||
+      process.env.GH_TOKEN ||
+      (await password({
+        message: 'Enter GitHub token',
+      }));
 
     relgen = createRelgen({
       llm: {
