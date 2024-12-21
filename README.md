@@ -1,11 +1,14 @@
 # Relgen 📝
 
-AI-powered release notes that write themselves from your PRs and issues.
+AI-powered tool that writes release notes, PR descriptions, and manages issues automatically.
 
 ## Features
 
-- 🤖 AI-powered release notes generation
-- 🔄 Integration with GitHub for PR and issue context
+- 🤖 AI-powered content generation for:
+  - Release notes
+  - Pull request descriptions
+  - Issue labeling and categorization
+- 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
 - 🛠️ Customizable templates and prompts
@@ -44,11 +47,24 @@ const relgen = createRelgen({
 });
 ```
 
-3. Generate release notes:
+3. Use Relgen:
 
 ```typescript
+// Generate release notes
 const releaseNotes = await relgen.generate({
   // Your generation options here
+});
+
+// Generate PR description
+const prDescription = await relgen.describePR({
+  prNumber: 123,
+  repository: 'owner/repo'
+});
+
+// Auto-label issues
+const labels = await relgen.suggestLabels({
+  issueNumber: 456,
+  repository: 'owner/repo'
 });
 ```
 
