@@ -1,8 +1,8 @@
 {
   "llm": {
-    "provider": "anthropic",
-    "model": "claude-3-opus-latest",
-    "apiKey": "your-anthropic-api-key-here"
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "apiKey": "your-openai-api-key-here"
   },
   "integrations": {
     "github": {

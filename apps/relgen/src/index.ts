@@ -40,7 +40,11 @@ const cli = program
   .option('-t, --llm-token <token>', 'llm token')
   .option('-s, --silent', 'do not print output')
   .option('-c, --config <config>', 'config file')
-  .option('-v, --verbose', 'verbose output (debug statements)')
+  .addOption(
+    new Option('-v, --verbose', 'verbose output (debug statements)').conflicts(
+      'silent'
+    )
+  )
   .addOption(
     new Option('-p, --provider <provider>', 'llm provider').choices(
       providerChoices

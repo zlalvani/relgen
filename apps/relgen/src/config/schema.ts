@@ -11,7 +11,6 @@ export const openaiModelChoices = [
   'gpt-4o-audio-preview',
   'gpt-4o-audio-preview-2024-10-01',
   'gpt-4o-mini',
-  'gpt-4o-mini',
 ] as const;
 export const anthropicModelChoices = [
   'claude-3-5-sonnet-latest',
