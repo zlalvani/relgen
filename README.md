@@ -51,20 +51,27 @@ const relgen = createRelgen({
 
 ```typescript
 // Generate release notes
-const releaseNotes = await relgen.generate({
-  // Your generation options here
+const notes = await relgen.remote.release.describe({
+  owner: 'org',
+  repo: 'repo'
 });
 
 // Generate PR description
-const prDescription = await relgen.describePR({
-  prNumber: 123,
-  repository: 'owner/repo'
+const description = await relgen.remote.pr.describe({
+  owner: 'org',
+  repo: 'repo',
+  num: 123
+}, {
+  write: 'pr' // or 'comment' to post as comment
 });
 
 // Auto-label issues
-const labels = await relgen.suggestLabels({
-  issueNumber: 456,
-  repository: 'owner/repo'
+const labels = await relgen.remote.issue.label({
+  owner: 'org',
+  repo: 'repo', 
+  num: 456
+}, {
+  write: 'add' // or 'set' to replace existing labels
 });
 ```
 
