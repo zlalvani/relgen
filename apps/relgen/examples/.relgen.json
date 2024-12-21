@@ -1,0 +1,15 @@
+{
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-3-opus-latest",
+    "apiKey": "your-anthropic-api-key-here"
+  },
+  "integrations": {
+    "github": {
+      "token": "your-github-token-here"
+    },
+    "linear": {
+      "token": "your-linear-token-here"
+    }
+  }
+}
