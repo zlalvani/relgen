@@ -1,6 +1,6 @@
 # Relgen 📝
 
-Relgen is an AI-powered release notes generator that automatically creates meaningful and well-structured release notes from your pull requests and issues.
+AI-powered release notes that write themselves from your PRs and issues.
 
 ## Features
 
