@@ -52,7 +52,7 @@ export const languageModelService = (
           }
           case 'product': {
             system = dedent`
-            You are a highly experienced product manager tasked with summarizing the latest release for .
+            You are a highly experienced product manager tasked with summarizing the latest release for the rest of the product org.
             Use the given context to generate a summary that will be used in a product update.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.

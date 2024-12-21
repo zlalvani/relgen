@@ -43,7 +43,9 @@ export const githubClient = (octo: Octokit) => {
           };
           type?: 'issue' | 'pr';
           status?: 'open' | 'closed' | 'merged';
+          base?: string;
           mergedAfter?: Date;
+          mergedBefore?: Date;
         }) => {
           const filters: string[] = [];
 
@@ -61,6 +63,14 @@ export const githubClient = (octo: Octokit) => {
 
           if (query.mergedAfter) {
             filters.push(`merged:>${query.mergedAfter.toISOString()}`);
+          }
+
+          if (query.mergedBefore) {
+            filters.push(`merged:<${query.mergedBefore.toISOString()}`);
+          }
+
+          if (query.base) {
+            filters.push(`base:${query.base}`);
           }
 
           const q = filters.join(' ');
