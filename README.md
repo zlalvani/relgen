@@ -14,6 +14,58 @@ AI-powered tool that writes release notes, PR descriptions, and manages issues a
 - 🛠️ Customizable templates and prompts
 - 📦 Modular architecture with TypeScript
 
+## CLI Usage
+
+Relgen provides a CLI tool for easy access to its features:
+
+```bash
+# Generate release notes
+relgen release describe owner/repo
+
+# Generate PR description
+relgen pr describe owner/repo 123
+
+# Auto-label a PR
+relgen pr label owner/repo 456
+
+# Auto-label an issue
+relgen issue label owner/repo 789
+
+# Use different LLM providers
+relgen release describe owner/repo --llm.provider anthropic
+
+# Write results back to GitHub
+relgen pr describe owner/repo 123 --write pr
+relgen pr label owner/repo 456 --write add
+
+# Use custom templates/prompts
+relgen release describe owner/repo --template custom.md
+relgen pr describe owner/repo 123 --prompt custom-prompt.txt
+
+# Get help
+relgen --help
+relgen release describe --help
+relgen pr describe --help
+relgen issue label --help
+```
+
+Configuration can be provided via environment variables or a `.relgenrc.json` file:
+
+```json
+{
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "apiKey": "${OPENAI_API_KEY}"
+  },
+  "integrations": {
+    "github": {
+      "token": "${GITHUB_TOKEN}"
+    }
+  }
+}
+```
+
 ## Installation
 
 ```bash
@@ -73,58 +125,6 @@ const labels = await relgen.remote.issue.label({
 }, {
   write: 'add' // or 'set' to replace existing labels
 });
-```
-
-## CLI Usage
-
-Relgen provides a CLI tool for easy access to its features:
-
-```bash
-# Generate release notes
-relgen release describe owner/repo
-
-# Generate PR description
-relgen pr describe owner/repo 123
-
-# Auto-label a PR
-relgen pr label owner/repo 456
-
-# Auto-label an issue
-relgen issue label owner/repo 789
-
-# Use different LLM providers
-relgen release describe owner/repo --llm.provider anthropic
-
-# Write results back to GitHub
-relgen pr describe owner/repo 123 --write pr
-relgen pr label owner/repo 456 --write add
-
-# Use custom templates/prompts
-relgen release describe owner/repo --template custom.md
-relgen pr describe owner/repo 123 --prompt custom-prompt.txt
-
-# Get help
-relgen --help
-relgen release describe --help
-relgen pr describe --help
-relgen issue label --help
-```
-
-Configuration can be provided via environment variables or a `.relgenrc.json` file:
-
-```json
-{
-  "llm": {
-    "provider": "openai",
-    "model": "gpt-4",
-    "apiKey": "${OPENAI_API_KEY}"
-  },
-  "integrations": {
-    "github": {
-      "token": "${GITHUB_TOKEN}"
-    }
-  }
-}
 ```
 
 ## Documentation
