@@ -77,36 +77,53 @@ const labels = await relgen.remote.issue.label({
 
 ## CLI Usage
 
-Relgen also comes with a convenient CLI tool. After installation, you can use it directly from your terminal:
+Relgen provides a CLI tool for easy access to its features:
 
 ```bash
-# Generate release notes for the latest changes
-relgen generate
+# Generate release notes
+relgen release describe owner/repo
 
-# Generate notes for a specific PR
-relgen generate --pr 123
+# Generate PR description
+relgen pr describe owner/repo 123
 
-# Generate notes with a custom template
-relgen generate --template release-template.md
+# Auto-label a PR
+relgen pr label owner/repo 456
 
-# Generate notes for a date range
-relgen generate --from 2024-01-01 --to 2024-01-31
+# Auto-label an issue
+relgen issue label owner/repo 789
 
-# Use a specific LLM provider
-relgen generate --provider anthropic
+# Use different LLM providers
+relgen release describe owner/repo --llm.provider anthropic
+
+# Write results back to GitHub
+relgen pr describe owner/repo 123 --write pr
+relgen pr label owner/repo 456 --write add
+
+# Use custom templates/prompts
+relgen release describe owner/repo --template custom.md
+relgen pr describe owner/repo 123 --prompt custom-prompt.txt
 
 # Get help
 relgen --help
+relgen release describe --help
+relgen pr describe --help
+relgen issue label --help
 ```
 
-You can also create a configuration file `.relgenrc.json` in your project root:
+Configuration can be provided via environment variables or a `.relgenrc.json` file:
 
 ```json
 {
-  "provider": "openai",
-  "model": "gpt-4",
-  "template": "./templates/custom-template.md",
-  "githubToken": "${GITHUB_TOKEN}"
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "apiKey": "${OPENAI_API_KEY}"
+  },
+  "integrations": {
+    "github": {
+      "token": "${GITHUB_TOKEN}"
+    }
+  }
 }
 ```
 
