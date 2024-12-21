@@ -49,7 +49,7 @@ relgen pr describe --help
 relgen issue label --help
 ```
 
-Configuration can be provided via environment variables or a `.relgenrc.json` file:
+Configuration can be provided via environment variables or a `.relgen.json` file:
 
 ```json
 {
