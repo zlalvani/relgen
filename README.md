@@ -52,6 +52,41 @@ const releaseNotes = await relgen.generate({
 });
 ```
 
+## CLI Usage
+
+Relgen also comes with a convenient CLI tool. After installation, you can use it directly from your terminal:
+
+```bash
+# Generate release notes for the latest changes
+relgen generate
+
+# Generate notes for a specific PR
+relgen generate --pr 123
+
+# Generate notes with a custom template
+relgen generate --template release-template.md
+
+# Generate notes for a date range
+relgen generate --from 2024-01-01 --to 2024-01-31
+
+# Use a specific LLM provider
+relgen generate --provider anthropic
+
+# Get help
+relgen --help
+```
+
+You can also create a configuration file `.relgenrc.json` in your project root:
+
+```json
+{
+  "provider": "openai",
+  "model": "gpt-4",
+  "template": "./templates/custom-template.md",
+  "githubToken": "${GITHUB_TOKEN}"
+}
+```
+
 ## Documentation
 
 For detailed documentation, check out:
