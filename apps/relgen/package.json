@@ -24,7 +24,8 @@
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
     "radashi": "^12.3.0",
-    "relgen-core": "workspace:*"
+    "relgen-core": "workspace:*",
+    "zod": "^3.24.1"
   },
   "files": [
     "dist"

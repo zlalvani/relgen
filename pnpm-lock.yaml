@@ -57,6 +57,9 @@ importers:
       relgen-core:
         specifier: workspace:*
         version: link:../../packages/relgen-core
+      zod:
+        specifier: ^3.24.1
+        version: 3.24.1
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
