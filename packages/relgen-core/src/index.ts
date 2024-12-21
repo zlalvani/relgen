@@ -158,7 +158,8 @@ const relgen = ({
           args: {
             owner: string;
             repo: string;
-            tag?: string;
+            toTag?: string;
+            fromTag?: string;
           },
           options?: {
             persona?: 'marketing' | 'engineering' | 'product' | 'leadership';
@@ -179,28 +180,69 @@ const relgen = ({
                 };
           }
         ) => {
-          const { owner, repo, tag } = args;
+          const { owner, repo, toTag, fromTag } = args;
 
-          if (tag) {
-            throw new Error('Not implemented');
-          }
-
-          const release = await github.rest.repos.getLatestRelease({
+          const githubRepo = await github.$rest.repos.get({
             owner,
             repo,
           });
 
-          const newPrs = await github.rest.search.issuesAndPullRequests({
-            repo: {
-              owner,
-              repo,
-            },
-            type: 'pr',
-            status: 'merged',
-            mergedAfter: release?.data.published_at
-              ? new Date(release.data.published_at)
-              : undefined,
-          });
+          const defaultBranch = githubRepo.data.default_branch;
+
+          const newPrs = await (async () => {
+            // If neither tag is provided, get the most recent release and all PRs after it
+            if (!fromTag && !toTag) {
+              const latest = await github.rest.repos.getLatestRelease({
+                owner,
+                repo,
+              });
+
+              return await github.rest.search.issuesAndPullRequests({
+                repo: {
+                  owner,
+                  repo,
+                },
+                type: 'pr',
+                base: defaultBranch,
+                status: 'merged',
+                mergedAfter: latest?.data.published_at
+                  ? new Date(latest.data.published_at)
+                  : undefined,
+              });
+            }
+
+            const from = fromTag
+              ? await github.$rest.repos.getReleaseByTag({
+                  owner,
+                  repo,
+                  tag: fromTag,
+                })
+              : undefined;
+
+            const to = toTag
+              ? await github.$rest.repos.getReleaseByTag({
+                  owner,
+                  repo,
+                  tag: toTag,
+                })
+              : undefined;
+
+            return await github.rest.search.issuesAndPullRequests({
+              repo: {
+                owner,
+                repo,
+              },
+              type: 'pr',
+              base: defaultBranch,
+              status: 'merged',
+              mergedAfter: from?.data.published_at
+                ? new Date(from.data.published_at)
+                : undefined,
+              mergedBefore: to?.data.published_at
+                ? new Date(to.data.published_at)
+                : undefined,
+            });
+          })();
 
           if (!newPrs.data.items.length) {
             return null;
@@ -224,7 +266,7 @@ const relgen = ({
             // Only take the first linked issue for now
             const issue = issueMap.get(pr.number)?.[0];
 
-            // TODO: include labels for the PRs and issues
+            // TODO: include labels for the issues and comments for both
             return {
               pr: makeContext({
                 source: 'github',
@@ -234,6 +276,7 @@ const relgen = ({
                 <pr>
                   <title>${pr.title}</title>
                   <body>${pr.body}</body>
+                  ${pr.labels.length > 0 ? `<labels>${pr.labels.join(',')}</labels>` : ''}
                 </pr>
                 `,
               }),
@@ -359,6 +402,16 @@ const relgen = ({
               owner,
               repo,
               pull_number: num,
+              body: result.object.description,
+            });
+          } else if (
+            options?.write === 'comment' &&
+            result.object.description
+          ) {
+            await github.$rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: num,
               body: result.object.description,
             });
           }

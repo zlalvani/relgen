@@ -214,8 +214,9 @@ issue
     }
   });
 
+// Can be e.g. zlalvani/relgen or https://github.com/zlalvani/relgen
 const parseRepoPath = (path: string) => {
-  const [owner, repo] = path.split('/').slice(-2);
+  const [owner, repo] = path.split('/').filter(Boolean).slice(-2);
 
   if (!owner || !repo) {
     throw new Error('Invalid repository URL');
@@ -230,7 +231,9 @@ const release = remote
 
 release
   .command('describe')
-  .argument('<repo>', 'repository or specific release')
+  .argument('<repo>', 'repository')
+  .option('--from <from>', 'tag of the previous release', 'latest' as const)
+  .option('--to <to>', 'tag of the current release')
   .addOption(
     new Option('--persona <persona>', 'persona').choices([
       'marketing',
@@ -251,11 +254,7 @@ release
   )
   .description('describe a release')
   .action(async (repoOrReleasePath, options) => {
-    // TODO: support existing release summaries
-    if (repoOrReleasePath.includes('/release/')) {
-      throw new Error('Not implemented');
-    }
-
+    const { from, to } = options;
     const { owner, repo } = parseRepoPath(repoOrReleasePath);
 
     const {
@@ -290,6 +289,8 @@ release
       {
         owner,
         repo,
+        fromTag: from,
+        toTag: to,
       },
       {
         include,
