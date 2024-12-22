@@ -36,7 +36,7 @@ const log = (message: string) => {
 
 const cli = program
   .name('relgen')
-  .version('0.0.1')
+  .version('0.0.2')
   .option('-t, --llm-token <token>', 'llm token')
   .option('-s, --silent', 'do not print output')
   .option('-c, --config <config>', 'config file')
