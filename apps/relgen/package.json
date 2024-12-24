@@ -1,6 +1,6 @@
 {
   "name": "relgen",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
@@ -27,7 +27,9 @@
     "@relgen/core": "workspace:*",
     "zod": "^3.24.1"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
