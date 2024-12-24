@@ -4,7 +4,7 @@
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
-    "dev": "tsup src/index.ts --format esm --watch ./src --watch \"../../packages/relgen-core/src/**\" --sourcemap --clean",
+    "dev": "tsup src/index.ts --format esm --watch ./src --sourcemap --clean",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env -c --"
   },
@@ -24,7 +24,7 @@
     "pino": "^9.5.0",
     "pino-pretty": "^13.0.0",
     "radashi": "^12.3.0",
-    "relgen-core": "workspace:*",
+    "@relgen/core": "workspace:*",
     "zod": "^3.24.1"
   },
   "files": ["dist"],
