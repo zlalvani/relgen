@@ -1,11 +1,12 @@
+#!/usr/bin/env node
 import { access, readFile } from 'node:fs/promises';
 import { URL } from 'node:url';
 import { Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
+import { type Relgen, createRelgen } from '@relgen/core';
 import kleur from 'kleur';
 import pino from 'pino';
 import { toInt } from 'radashi';
-import { type Relgen, createRelgen } from 'relgen-core';
 import {
   type Config,
   anthropicModelChoices,

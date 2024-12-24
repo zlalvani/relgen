@@ -58,14 +58,14 @@ const assertIsUnchanged = ({ github, context, core }) => {
   }
 };
 
-exports.verify = ({ github, context, core }) => {
+exports.verify = ({ github, context, core, target }) => {
   const labels = (context.payload?.pull_request?.labels ?? []).map((l) =>
     l.name.toLowerCase()
   );
-  if (labels.includes('prerelease')) {
+  if (labels.includes(`prerelease-${target}`)) {
     return assertIsValidPrerelease({ github, context, core });
   }
-  if (labels.includes('release')) {
+  if (labels.includes(`release-${target}`)) {
     return assertIsValidRelease({ github, context, core });
   }
   assertIsUnchanged({ github, context, core });

@@ -7,7 +7,7 @@ on:
       - "apps/relgen/**"
 
 jobs:
-  check:
+  check-cli:
     name: "Check if release is needed"
     runs-on: "ubuntu-latest"
     outputs:
@@ -21,14 +21,14 @@ jobs:
       - uses: mukunku/tag-exists-action@v1.1.0
         id: check-tag
         with:
-          tag: v${{ steps.get-version.outputs.current-version }}
+          tag: relgen-v${{ steps.get-version.outputs.current-version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  release:
+  release-cli:
     name: "Release"
-    needs: check
-    if: needs.check.outputs.exists == 'false'
+    needs: check-cli
+    if: needs.check-cli.outputs.exists == 'false'
     runs-on: "ubuntu-latest"
     permissions:
       contents: write
@@ -36,16 +36,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: martinbeentjes/npm-get-version-action@main
         id: get-version
+        with:
+          path: apps/relgen
       - uses: actions/create-release@v1
         id: create-release
         with:
           draft: false
           prerelease: false
-          release_name: v${{ steps.get-version.outputs.current-version}}
-          tag_name: v${{ steps.get-version.outputs.current-version}}
+          release_name: relgen-v${{ steps.get-version.outputs.current-version}}
+          tag_name: relgen-v${{ steps.get-version.outputs.current-version}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  publish:
+  publish-cli:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
