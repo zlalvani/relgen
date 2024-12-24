@@ -6,7 +6,8 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "test": "turbo test",
-    "typecheck": "turbo typecheck"
+    "typecheck": "turbo typecheck",
+    "publish:changeset": "turbo build && pnpm changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
