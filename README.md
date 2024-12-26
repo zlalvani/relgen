@@ -49,7 +49,26 @@ relgen pr describe --help
 relgen issue label --help
 ```
 
-Configuration can be provided via environment variables or a `.relgen.json` file:
+## Configuration
+
+Relgen can be configured through environment variables or a `.relgen.json` file.
+
+### Environment Variables
+```bash
+# Required: Set up your LLM provider
+export OPENAI_API_KEY="your-api-key"
+# or for Anthropic
+export ANTHROPIC_API_KEY="your-api-key"
+
+# Required: GitHub access
+export GITHUB_TOKEN="your-github-token"
+
+# Optional: Linear integration
+export LINEAR_API_KEY="your-linear-token"
+```
+
+### Configuration File
+Create a `.relgen.json` in your project root:
 
 ```json
 {
@@ -61,6 +80,9 @@ Configuration can be provided via environment variables or a `.relgen.json` file
   "integrations": {
     "github": {
       "token": "${GITHUB_TOKEN}"
+    },
+    "linear": {
+      "token": "${LINEAR_API_KEY}" 
     }
   }
 }
@@ -78,14 +100,7 @@ yarn global add relgen
 
 ## Quick Start
 
-1. Set up your environment variables:
-```bash
-export OPENAI_API_KEY="your-api-key"
-# or for Anthropic
-export ANTHROPIC_API_KEY="your-api-key"
-```
-
-2. Create a basic configuration:
+1. Create a basic configuration:
 
 ```typescript
 import { createRelgen } from 'relgen';
