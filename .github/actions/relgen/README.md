@@ -76,7 +76,9 @@ Then update your workflow:
 - uses: zlalvani/relgen@v1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
-    openai-key: ${{ secrets.OPENAI_API_KEY }}
+    llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
+    llm-provider: openai # or anthropic
+    llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
     description-template: .github/templates/pr-description.md
     description-prompt: .github/prompts/pr-description.txt
 ```
