@@ -142,24 +142,15 @@ const labels = await relgen.remote.issue.label({
 });
 ```
 
-## Documentation
-
-For detailed documentation, check out:
-
-- [Configuration Guide](docs/configuration.md)
-- [API Reference](docs/api.md)
-- [Templates](docs/templates.md)
-- [Examples](apps/relgen/examples)
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please feel free to submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+5. Open a pr
 
 ## License
 
@@ -170,8 +161,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you have any questions or need help, please:
 - Open an issue
 - Start a GitHub Discussion
-- Check the documentation
-
-## Acknowledgments
-
-Thanks to all contributors who have helped shape Relgen!
