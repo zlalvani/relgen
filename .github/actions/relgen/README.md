@@ -35,9 +35,9 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `github-token` | GitHub token for API access | Yes | N/A |
-| `llm-key` | LLM API key | Yes | N/A |
-| `llm-provider` | LLM provider (openai or anthropic) | Yes | openai |
-| `llm-model` | LLM model to use | No | gpt-4o-mini |
+| `llm-key` | LLM API key (OpenAI or Anthropic) | Yes | N/A |
+| `llm-provider` | LLM provider (`openai` or `anthropic`) | Yes | `openai` |
+| `llm-model` | Model to use (e.g. `gpt-4o-mini` for OpenAI or `claude-3-sonnet-20240229` for Anthropic) | Yes | N/A |
 | `description-template` | Path to description template file | No | Default template |
 | `description-prompt` | Path to description prompt file | No | Default prompt |
 | `write-mode` | How to write descriptions (`pr` or `comment`) | No | `comment` |
