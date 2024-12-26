@@ -19,6 +19,9 @@ jobs:
       - name: Setup
         uses: ./tooling/github/setup
 
+      - name: Create npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
@@ -26,4 +29,3 @@ jobs:
           publish: pnpm publish:changeset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
