@@ -148,9 +148,24 @@ Contributions are welcome! Please feel free to submit a pull request. For major 
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a pr
+3. Make your changes
+4. Add a changeset to document your changes:
+   ```bash
+   pnpm changeset
+   ```
+   This will prompt you to:
+   - Select which packages you've modified
+   - Choose a semver bump type (major/minor/patch)
+   - Provide a description of your changes
+5. Commit your changes and changeset:
+   ```bash
+   git add .
+   git commit -m 'feat: Add some amazing feature'
+   ```
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a PR
+
+The changeset will be automatically used to update the package version and changelog when your PR is merged.
 
 ## License
 
