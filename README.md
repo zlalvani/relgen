@@ -1,6 +1,6 @@
 # Relgen 📝
 
-AI-powered tool that writes release notes, PR descriptions, and manages issues automatically.
+AI-powered tool for GitHub repositories that automatically generates release notes, writes pull request descriptions, and intelligently applies labels to issues and PRs.
 
 ## Features
 
@@ -14,33 +14,43 @@ AI-powered tool that writes release notes, PR descriptions, and manages issues a
 - 🛠️ Customizable templates and prompts
 - 📦 Modular architecture with TypeScript
 
+## Installation
+
+```bash
+npm install -g relgen
+# or
+pnpm add -g relgen
+# or
+yarn global add relgen
+```
+
 ## CLI Usage
 
 Relgen provides a CLI tool for easy access to its features:
 
 ```bash
 # Generate release notes
-relgen release describe owner/repo
+relgen remote release describe owner/repo
 
 # Generate PR description
-relgen pr describe owner/repo 123
+relgen remote pr describe owner/repo 123
 
 # Auto-label a PR
-relgen pr label owner/repo 456
+relgen remote pr label owner/repo 456
 
 # Auto-label an issue
-relgen issue label owner/repo 789
+relgen remote issue label owner/repo 789
 
 # Use different LLM providers
-relgen release describe owner/repo --llm.provider anthropic
+relgen remote release describe owner/repo --llm.provider anthropic
 
 # Write results back to GitHub
-relgen pr describe owner/repo 123 --write pr
-relgen pr label owner/repo 456 --write add
+relgen remote pr describe owner/repo 123 --write pr
+relgen remote pr label owner/repo 456 --write add
 
 # Use custom templates/prompts
-relgen release describe owner/repo --template custom.md
-relgen pr describe owner/repo 123 --prompt custom-prompt.txt
+relgen remote release describe owner/repo --template custom.md
+relgen remote pr describe owner/repo 123 --prompt custom-prompt.txt
 
 # Get help
 relgen --help
@@ -49,7 +59,26 @@ relgen pr describe --help
 relgen issue label --help
 ```
 
-Configuration can be provided via environment variables or a `.relgen.json` file:
+## Configuration
+
+Relgen can be configured through environment variables or a `.relgen.json` file. Any required variables that aren't provided will be requested via CLI prompt.
+
+### Environment Variables
+```bash
+# Set up your LLM provider
+export OPENAI_API_KEY="your-api-key"
+# or for Anthropic
+export ANTHROPIC_API_KEY="your-api-key"
+
+# GitHub access
+export GITHUB_TOKEN="your-github-token"
+
+# Linear integration
+export LINEAR_API_KEY="your-linear-token"
+```
+
+### Configuration File
+Create a `.relgen.json` in your project root:
 
 ```json
 {
@@ -61,90 +90,38 @@ Configuration can be provided via environment variables or a `.relgen.json` file
   "integrations": {
     "github": {
       "token": "${GITHUB_TOKEN}"
+    },
+    "linear": {
+      "token": "${LINEAR_API_KEY}" 
     }
   }
 }
 ```
 
-## Installation
-
-```bash
-npm install relgen
-# or
-pnpm add relgen
-# or
-yarn add relgen
-```
-
-## Quick Start
-
-1. Set up your environment variables:
-```bash
-export OPENAI_API_KEY="your-api-key"
-# or for Anthropic
-export ANTHROPIC_API_KEY="your-api-key"
-```
-
-2. Create a basic configuration:
-
-```typescript
-import { createRelgen } from 'relgen';
-
-const relgen = createRelgen({
-  llm: {
-    provider: 'openai',
-    apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4'
-  }
-});
-```
-
-3. Use Relgen:
-
-```typescript
-// Generate release notes
-const notes = await relgen.remote.release.describe({
-  owner: 'org',
-  repo: 'repo'
-});
-
-// Generate PR description
-const description = await relgen.remote.pr.describe({
-  owner: 'org',
-  repo: 'repo',
-  num: 123
-}, {
-  write: 'pr' // or 'comment' to post as comment
-});
-
-// Auto-label issues
-const labels = await relgen.remote.issue.label({
-  owner: 'org',
-  repo: 'repo', 
-  num: 456
-}, {
-  write: 'add' // or 'set' to replace existing labels
-});
-```
-
-## Documentation
-
-For detailed documentation, check out:
-
-- [Configuration Guide](docs/configuration.md)
-- [API Reference](docs/api.md)
-- [Templates](docs/templates.md)
-- [Examples](apps/relgen/examples)
-
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Contributions are welcome! Please feel free to submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes
+4. Add a changeset to document your changes:
+   ```bash
+   pnpm changeset
+   ```
+   This will prompt you to:
+   - Select which packages you've modified
+   - Choose a semver bump type (major/minor/patch)
+   - Provide a description of your changes
+5. Commit your changes and changeset:
+   ```bash
+   git add .
+   git commit -m 'feat: Add some amazing feature'
+   ```
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a PR
+
+The changeset will be automatically used to update the package version and changelog when your PR is merged.
 
 ## License
 
@@ -155,8 +132,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you have any questions or need help, please:
 - Open an issue
 - Start a GitHub Discussion
-- Check the documentation
-
-## Acknowledgments
-
-Thanks to all contributors who have helped shape Relgen!

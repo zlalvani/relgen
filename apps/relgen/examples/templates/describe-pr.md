@@ -1,8 +1,8 @@
 ### Changes
-Here's what changed
+A bullet point list of the important changes, one sentence each
 
 ### Implementation
-Here's a short explanation of how the code relates to the changes
+If the changes are complex, use this section to explain the approach at a high level in a few sentences. If they are not complex, omit this section.
 
 ### Other Notes
-Include this section if there's anything else that's important to highlight. DO NOT SAY ANYTHING REDUNDANT, OMIT THE SECTION IF NEEDED.
+If there are small tweaks to things unrelated to the main purpose of the PR, highlight them here in a bullet point list. One sentence each. If there are no small tweaks, omit this section.
