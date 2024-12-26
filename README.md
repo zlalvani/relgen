@@ -14,6 +14,16 @@ AI-powered tool for GitHub repositories that automatically generates release not
 - 🛠️ Customizable templates and prompts
 - 📦 Modular architecture with TypeScript
 
+## Installation
+
+```bash
+npm install -g relgen
+# or
+pnpm add -g relgen
+# or
+yarn global add relgen
+```
+
 ## CLI Usage
 
 Relgen provides a CLI tool for easy access to its features:
@@ -86,16 +96,6 @@ Create a `.relgen.json` in your project root:
     }
   }
 }
-```
-
-## Installation
-
-```bash
-npm install -g relgen
-# or
-pnpm add -g relgen
-# or
-yarn global add relgen
 ```
 
 ## Quick Start
