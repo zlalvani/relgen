@@ -1,5 +1,11 @@
 # relgen
 
+## 0.0.5
+
+### Patch Changes
+
+- 6837a91: renamed GH_TOKEN to GITHUB_TOKEN env var
+
 ## 0.0.4
 
 ### Patch Changes
