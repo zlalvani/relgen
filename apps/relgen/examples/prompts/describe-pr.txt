@@ -1,1 +1,2 @@
 If the pull request makes changes that seem unrelated to its main purpose, be sure to highlight them.
+If you see `changeset` related files, don't describe them as added files; instead, use them to help describe the changes.
