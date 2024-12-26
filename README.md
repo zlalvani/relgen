@@ -98,50 +98,6 @@ Create a `.relgen.json` in your project root:
 }
 ```
 
-## Quick Start
-
-1. Create a basic configuration:
-
-```typescript
-import { createRelgen } from 'relgen';
-
-const relgen = createRelgen({
-  llm: {
-    provider: 'openai',
-    apiKey: process.env.OPENAI_API_KEY,
-    model: 'gpt-4'
-  }
-});
-```
-
-3. Use Relgen:
-
-```typescript
-// Generate release notes
-const notes = await relgen.remote.release.describe({
-  owner: 'org',
-  repo: 'repo'
-});
-
-// Generate PR description
-const description = await relgen.remote.pr.describe({
-  owner: 'org',
-  repo: 'repo',
-  num: 123
-}, {
-  write: 'pr' // or 'comment' to post as comment
-});
-
-// Auto-label issues
-const labels = await relgen.remote.issue.label({
-  owner: 'org',
-  repo: 'repo', 
-  num: 456
-}, {
-  write: 'add' // or 'set' to replace existing labels
-});
-```
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
