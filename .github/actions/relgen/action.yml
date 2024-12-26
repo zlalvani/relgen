@@ -17,8 +17,7 @@ inputs:
     default: 'openai'
   llm-model:
     description: 'LLM model to use'
-    required: false
-    default: 'gpt-4o-mini'
+    required: true
   description-template:
     description: 'Path to description template file'
   description-prompt:
@@ -52,8 +51,9 @@ runs:
         OPENAI_API_KEY: ${{ inputs.llm-provider == 'openai' && inputs.llm-key || '' }}
         ANTHROPIC_API_KEY: ${{ inputs.llm-provider == 'anthropic' && inputs.llm-key || '' }}
       run: |
-        relgen remote pr describe "${{ github.event.pull_request.html_url }}" --llm.provider ${{ inputs.llm-provider }} --llm.model ${{ inputs.llm-model }} \
+        relgen remote pr describe "${{ github.event.pull_request.html_url }}" --provider ${{ inputs.llm-provider }} --model ${{ inputs.llm-model }} \
           --write comment \
+          --llm-token ${{ inputs.llm-key }} \
           ${{ inputs.description-template != '' && format('--template {0}', inputs.description-template) }} \
           ${{ inputs.description-prompt != '' && format('--prompt {0}', inputs.description-prompt) }}
           
