@@ -20,27 +20,27 @@ Relgen provides a CLI tool for easy access to its features:
 
 ```bash
 # Generate release notes
-relgen release describe owner/repo
+relgen remote release describe owner/repo
 
 # Generate PR description
-relgen pr describe owner/repo 123
+relgen remote pr describe owner/repo 123
 
 # Auto-label a PR
-relgen pr label owner/repo 456
+relgen remote pr label owner/repo 456
 
 # Auto-label an issue
-relgen issue label owner/repo 789
+relgen remote issue label owner/repo 789
 
 # Use different LLM providers
-relgen release describe owner/repo --llm.provider anthropic
+relgen remote release describe owner/repo --llm.provider anthropic
 
 # Write results back to GitHub
-relgen pr describe owner/repo 123 --write pr
-relgen pr label owner/repo 456 --write add
+relgen remote pr describe owner/repo 123 --write pr
+relgen remote pr label owner/repo 456 --write add
 
 # Use custom templates/prompts
-relgen release describe owner/repo --template custom.md
-relgen pr describe owner/repo 123 --prompt custom-prompt.txt
+relgen remote release describe owner/repo --template custom.md
+relgen remote pr describe owner/repo 123 --prompt custom-prompt.txt
 
 # Get help
 relgen --help
