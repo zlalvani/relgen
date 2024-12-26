@@ -1,6 +1,6 @@
 # Relgen 📝
 
-AI-powered tool that writes release notes, PR descriptions, and manages issues automatically.
+AI-powered tool for GitHub repositories that automatically generates release notes, writes pull request descriptions, and intelligently applies labels to issues and PRs.
 
 ## Features
 
