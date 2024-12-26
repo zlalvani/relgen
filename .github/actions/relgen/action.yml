@@ -8,9 +8,17 @@ inputs:
   github-token:
     description: 'GitHub token'
     required: true
-  openai-key:
-    description: 'OpenAI API key'
+  llm-key:
+    description: 'LLM API key'
     required: true
+  llm-provider:
+    description: 'LLM provider (openai or anthropic)'
+    required: true
+    default: 'openai'
+  llm-model:
+    description: 'LLM model to use'
+    required: false
+    default: 'gpt-4o-mini'
   description-template:
     description: 'Path to description template file'
   description-prompt:
@@ -41,9 +49,10 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
-        OPENAI_API_KEY: ${{ inputs.openai-key }}
+        OPENAI_API_KEY: ${{ inputs.llm-provider == 'openai' && inputs.llm-key || '' }}
+        ANTHROPIC_API_KEY: ${{ inputs.llm-provider == 'anthropic' && inputs.llm-key || '' }}
       run: |
-        relgen remote pr describe "${{ github.event.pull_request.html_url }}" \
+        relgen remote pr describe "${{ github.event.pull_request.html_url }}" --llm.provider ${{ inputs.llm-provider }} --llm.model ${{ inputs.llm-model }} \
           --write comment \
           ${{ inputs.description-template != '' && format('--template {0}', inputs.description-template) }} \
           ${{ inputs.description-prompt != '' && format('--prompt {0}', inputs.description-prompt) }}
@@ -54,5 +63,5 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         OPENAI_API_KEY: ${{ inputs.openai-key }}
       run: |
-        relgen remote pr label "${{ github.event.pull_request.html_url }}" \
+        relgen remote pr label "${{ github.event.pull_request.html_url }}" --llm.provider ${{ inputs.llm-provider }} --llm.model ${{ inputs.llm-model }} \
           --write ${{ inputs.label-mode }}

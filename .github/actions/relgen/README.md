@@ -35,7 +35,9 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `github-token` | GitHub token for API access | Yes | N/A |
-| `openai-key` | OpenAI API key | Yes | N/A |
+| `llm-key` | LLM API key | Yes | N/A |
+| `llm-provider` | LLM provider (openai or anthropic) | Yes | openai |
+| `llm-model` | LLM model to use | No | gpt-4o-mini |
 | `description-template` | Path to description template file | No | Default template |
 | `description-prompt` | Path to description prompt file | No | Default prompt |
 | `write-mode` | How to write descriptions (`pr` or `comment`) | No | `comment` |

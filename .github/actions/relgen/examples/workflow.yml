@@ -13,7 +13,9 @@ jobs:
       - uses: zlalvani/relgen@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          openai-key: ${{ secrets.OPENAI_API_KEY }}
+          llm-key: ${{ secrets.OPENAI_API_KEY }}
+          llm-provider: openai
+          llm-model: gpt-4o-mini
           # Optional customizations:
           # description-template: .github/templates/pr-description.md
           # description-prompt: .github/prompts/pr-description.txt
