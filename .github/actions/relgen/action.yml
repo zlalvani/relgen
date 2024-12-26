@@ -13,13 +13,8 @@ inputs:
     required: true
   description-template:
     description: 'Path to description template file'
-    default: './node_modules/relgen/examples/templates/describe-pr.md'
   description-prompt:
     description: 'Path to description prompt file'
-    default: './node_modules/relgen/examples/prompts/describe-pr.txt'
-  write-mode:
-    description: 'How to write the description (pr or comment)'
-    default: 'comment'
   label-mode:
     description: 'How to write labels (add or set)'
     default: 'add'
@@ -49,7 +44,7 @@ runs:
         OPENAI_API_KEY: ${{ inputs.openai-key }}
       run: |
         relgen remote pr describe "${{ github.event.pull_request.html_url }}" \
-          --write ${{ inputs.write-mode }} \
+          --write comment \
           ${{ inputs.description-template != '' && format('--template {0}', inputs.description-template) }} \
           ${{ inputs.description-prompt != '' && format('--prompt {0}', inputs.description-prompt) }}
           
