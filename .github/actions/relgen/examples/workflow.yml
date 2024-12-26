@@ -1,0 +1,21 @@
+name: PR Assistant
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  relgen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: zlalvani/relgen@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          openai-key: ${{ secrets.OPENAI_API_KEY }}
+          # Optional customizations:
+          # description-template: .github/templates/pr-description.md
+          # description-prompt: .github/prompts/pr-description.txt
+          # write-mode: comment  # or 'pr' to update PR description
+          # label-mode: add     # or 'set' to replace existing labels

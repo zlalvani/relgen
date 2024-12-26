@@ -1,0 +1,63 @@
+name: 'Relgen PR Assistant'
+description: 'AI-powered PR descriptions and labels using relgen'
+branding:
+  icon: 'edit'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token'
+    required: true
+  openai-key:
+    description: 'OpenAI API key'
+    required: true
+  description-template:
+    description: 'Path to description template file'
+    default: './node_modules/relgen/examples/templates/describe-pr.md'
+  description-prompt:
+    description: 'Path to description prompt file'
+    default: './node_modules/relgen/examples/prompts/describe-pr.txt'
+  write-mode:
+    description: 'How to write the description (pr or comment)'
+    default: 'comment'
+  label-mode:
+    description: 'How to write labels (add or set)'
+    default: 'add'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+    
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 8
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        
+    - name: Install relgen
+      shell: bash
+      run: pnpm add -g relgen
+      
+    - name: Generate PR description
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        OPENAI_API_KEY: ${{ inputs.openai-key }}
+      run: |
+        relgen remote pr describe "${{ github.event.pull_request.html_url }}" \
+          --write ${{ inputs.write-mode }} \
+          --template ${{ inputs.description-template }} \
+          --prompt ${{ inputs.description-prompt }}
+          
+    - name: Label PR
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        OPENAI_API_KEY: ${{ inputs.openai-key }}
+      run: |
+        relgen remote pr label "${{ github.event.pull_request.html_url }}" \
+          --write ${{ inputs.label-mode }}
