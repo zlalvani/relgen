@@ -51,19 +51,19 @@ relgen issue label --help
 
 ## Configuration
 
-Relgen can be configured through environment variables or a `.relgen.json` file.
+Relgen can be configured through environment variables or a `.relgen.json` file. Any required variables that aren't provided will be requested via CLI prompt.
 
 ### Environment Variables
 ```bash
-# Required: Set up your LLM provider
+# Set up your LLM provider
 export OPENAI_API_KEY="your-api-key"
 # or for Anthropic
 export ANTHROPIC_API_KEY="your-api-key"
 
-# Required: GitHub access
+# GitHub access
 export GITHUB_TOKEN="your-github-token"
 
-# Optional: Linear integration
+# Linear integration
 export LINEAR_API_KEY="your-linear-token"
 ```
 
