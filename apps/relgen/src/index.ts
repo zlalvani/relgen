@@ -149,7 +149,7 @@ const remote = cli
 
     githubToken =
       githubToken ||
-      process.env.GH_TOKEN ||
+      process.env.GITHUB_TOKEN ||
       configFile?.integrations?.github?.token ||
       (await password({
         message: 'Enter GitHub token',
