@@ -22,6 +22,9 @@ jobs:
       - name: Create npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > .npmrc
 
+      - name: Copy README
+        run: cp README.md apps/relgen/README.md
+
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
