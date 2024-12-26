@@ -69,11 +69,11 @@ Configuration can be provided via environment variables or a `.relgen.json` file
 ## Installation
 
 ```bash
-npm install relgen
+npm install -g relgen
 # or
-pnpm add relgen
+pnpm add -g relgen
 # or
-yarn add relgen
+yarn global add relgen
 ```
 
 ## Quick Start
