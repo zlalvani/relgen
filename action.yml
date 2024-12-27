@@ -1,0 +1,77 @@
+name: 'Relgen'
+description: 'AI-powered PR descriptions and labels using relgen'
+branding:
+  icon: 'edit'
+  color: 'blue'
+
+inputs:
+  github-token:
+    description: 'GitHub token'
+    required: true
+  llm-key:
+    description: 'LLM API key'
+    required: true
+  skip-description:
+    description: 'Skip generating PR description'
+    required: false
+    default: 'false'
+  skip-labels:
+    description: 'Skip generating PR labels'
+    required: false
+    default: 'false'
+  llm-provider:
+    description: 'LLM provider (openai or anthropic)'
+    required: true
+    default: 'openai'
+  llm-model:
+    description: 'LLM model to use'
+    required: true
+  description-template:
+    description: 'Path to description template file'
+  description-prompt:
+    description: 'Path to description prompt file'
+  label-mode:
+    description: 'How to write labels (add or set)'
+    default: 'add'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/checkout@v4
+    
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 8
+    
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+        
+    - name: Install relgen
+      shell: bash
+      run: pnpm add -g relgen
+      
+    - name: Generate PR description
+      if: inputs.skip-description != 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        OPENAI_API_KEY: ${{ inputs.llm-provider == 'openai' && inputs.llm-key || '' }}
+        ANTHROPIC_API_KEY: ${{ inputs.llm-provider == 'anthropic' && inputs.llm-key || '' }}
+      run: |
+        relgen remote pr describe "${{ github.event.pull_request.html_url }}" --provider ${{ inputs.llm-provider }} --model ${{ inputs.llm-model }} \
+          --write comment \
+          --llm-token ${{ inputs.llm-key }} \
+          ${{ inputs.description-template != '' && format('--template {0}', inputs.description-template) }} \
+          ${{ inputs.description-prompt != '' && format('--prompt {0}', inputs.description-prompt) }}
+          
+    - name: Label PR
+      if: inputs.skip-labels != 'true'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        OPENAI_API_KEY: ${{ inputs.openai-key }}
+      run: |
+        relgen remote pr label "${{ github.event.pull_request.html_url }}" --llm.provider ${{ inputs.llm-provider }} --llm.model ${{ inputs.llm-model }} \
+          --write ${{ inputs.label-mode }}
