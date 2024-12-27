@@ -44,6 +44,8 @@ jobs:
 | `description-prompt` | Path to description prompt file | No | Default prompt |
 | `write-mode` | How to write descriptions (`pr` or `comment`) | No | `comment` |
 | `label-mode` | How to write labels (`add` or `set`) | No | `add` |
+| `disable-description` | Disable generating PR description | No | `false` |
+| `disable-labels` | Disable generating PR labels | No | `false` |
 
 ## Customization
 
