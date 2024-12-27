@@ -1,5 +1,11 @@
 # relgen
 
+## 0.0.6
+
+### Patch Changes
+
+- 4d115cd: enable node 18 support
+
 ## 0.0.5
 
 ### Patch Changes
