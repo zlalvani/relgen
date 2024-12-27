@@ -11,6 +11,14 @@ inputs:
   llm-key:
     description: 'LLM API key'
     required: true
+  skip-description:
+    description: 'Skip generating PR description'
+    required: false
+    default: 'false'
+  skip-labels:
+    description: 'Skip generating PR labels'
+    required: false
+    default: 'false'
   llm-provider:
     description: 'LLM provider (openai or anthropic)'
     required: true
@@ -45,6 +53,7 @@ runs:
       run: pnpm add -g relgen
       
     - name: Generate PR description
+      if: inputs.skip-description != 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
@@ -58,6 +67,7 @@ runs:
           ${{ inputs.description-prompt != '' && format('--prompt {0}', inputs.description-prompt) }}
           
     - name: Label PR
+      if: inputs.skip-labels != 'true'
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
