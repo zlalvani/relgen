@@ -62,7 +62,7 @@ relgen issue label --help
 ## Github Action
 
 ```yaml
-name: PR Assistant
+name: Relgen
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -74,7 +74,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: zlalvani/relgen@v1
+      - uses: zlalvani/relgen-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
@@ -82,7 +82,7 @@ jobs:
           llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
 ```
 
-For more documentation on the github action, please see its [README](actions/relgen/README.md)
+For more documentation on the github action, please see its [README](https://github.com/zlalvani/relgen-action).
 
 ## Configuration
 
