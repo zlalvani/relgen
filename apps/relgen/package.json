@@ -13,7 +13,7 @@
     "relgen": "dist/index.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^12.1.0",
@@ -27,9 +27,7 @@
     "@relgen/core": "workspace:*",
     "zod": "^3.24.1"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
