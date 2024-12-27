@@ -1,0 +1,23 @@
+name: Relgen
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  relgen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - uses: zlalvani/relgen-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          llm-key: ${{ secrets.OPENAI_API_KEY }}
+          llm-provider: openai
+          llm-model: gpt-4o-mini
+          description-template: apps/relgen/examples/templates/describe-pr.md
+          description-prompt: apps/relgen/examples/prompts/describe-pr.txt
