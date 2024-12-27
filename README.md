@@ -59,6 +59,31 @@ relgen pr describe --help
 relgen issue label --help
 ```
 
+## Github Action
+
+```yaml
+name: PR Assistant
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  relgen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: zlalvani/relgen@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
+          llm-provider: openai # or anthropic
+          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
+```
+
+For more documentation on the github action, please see its [README](actions/relgen/README.md)
+
 ## Configuration
 
 Relgen can be configured through environment variables or a `.relgen.json` file. Any required variables that aren't provided will be requested via CLI prompt.
