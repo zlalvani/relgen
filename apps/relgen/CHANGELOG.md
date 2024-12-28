@@ -1,5 +1,11 @@
 # relgen
 
+## 0.0.9
+
+### Patch Changes
+
+- a967267: added support for mult arg specifying owner/repo/num
+
 ## 0.0.8
 
 ### Patch Changes
