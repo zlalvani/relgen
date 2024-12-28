@@ -43,7 +43,7 @@ export const githubClient = (octo: Octokit) => {
 
           if (!success(result)) {
             const [error] = result;
-            if (error instanceof RequestError && error.status === 404) {
+            if (error instanceof RequestError && error.status === 403) {
               return null;
             }
             throw error;
