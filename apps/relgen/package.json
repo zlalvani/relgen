@@ -1,6 +1,6 @@
 {
   "name": "relgen",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
