@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
-      - uses: zlalvani/relgen-action@v1
+      - uses: zlalvani/relgen-action@zlalvani/add-footer
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           llm-key: ${{ secrets.OPENAI_API_KEY }}
