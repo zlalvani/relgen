@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.5
+
+### Patch Changes
+
+- 30d27ac: fix: handle 403 unauthorized from github when getting the current user
+
 ## 0.0.4
 
 ### Patch Changes
