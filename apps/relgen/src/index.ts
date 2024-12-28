@@ -170,29 +170,58 @@ const remote = cli
     });
   });
 
-const parseIssueUrl = (url: URL) => {
-  const [owner, repo, , number] = url.pathname.split('/').filter(Boolean);
+const parseRepoArgs = (first: string, second: string | undefined) => {
+  if (!!first && !!second) {
+    return { owner: first, repo: second };
+  }
 
-  if (!owner || !repo || !number) {
+  const [owner, repo] = first.split('/').filter(Boolean).slice(-2);
+
+  if (!owner || !repo) {
+    throw new Error('Invalid repository');
+  }
+
+  return { owner, repo };
+};
+
+const parseIssueArgs = (
+  first: string,
+  second: string | undefined,
+  third: number | undefined
+) => {
+  if (!!first && !!second && !!third) {
+    return { owner: first, repo: second, num: third };
+  }
+
+  if (!!first && !!second) {
+    const [owner, repo] = first.split('/').filter(Boolean).slice(-2);
+    const num = toInt(second, undefined);
+
+    if (!owner || !repo || !num) {
+      throw new Error('Invalid issue definition');
+    }
+
+    return { owner, repo, num };
+  }
+
+  const url = new URL(first);
+
+  const [owner, repo, , num] = url.pathname.split('/').filter(Boolean);
+
+  if (!owner || !repo || !num) {
     throw new Error('Invalid pull request URL');
   }
 
-  return { owner, repo, num: toInt(number) };
-};
-
-const parseIssueArg = (arg: string) => {
-  try {
-    return parseIssueUrl(new URL(arg));
-  } catch {
-    return toInt(arg, null);
-  }
+  return { owner, repo, num: toInt(num) };
 };
 
 const issue = remote.command('issue').description('tasks related to issues');
 
 issue
   .command('label')
-  .argument('<issue>', 'issue')
+  .argument('<owner>', 'issue URL or owner/repo or owner')
+  .argument('[repo]', 'repository or issue number')
+  .argument('[number]', 'issue number', (val) => toInt(val, undefined))
   .addOption(
     new Option('-w, --write <write>', 'update the labels').choices([
       'add',
@@ -205,8 +234,8 @@ issue
     (val) => (val === 'existing' ? ('existing' as const) : val.split(','))
   )
   .description('label an issue')
-  .action(async (issue, options) => {
-    const { owner, repo, num } = parseIssueUrl(new URL(issue));
+  .action(async (first, second, third, options) => {
+    const { owner, repo, num } = parseIssueArgs(first, second, third);
 
     const { write, exclude } = options;
 
@@ -229,24 +258,14 @@ issue
     }
   });
 
-// Can be e.g. zlalvani/relgen or https://github.com/zlalvani/relgen
-const parseRepoPath = (path: string) => {
-  const [owner, repo] = path.split('/').filter(Boolean).slice(-2);
-
-  if (!owner || !repo) {
-    throw new Error('Invalid repository URL');
-  }
-
-  return { owner, repo };
-};
-
 const release = remote
   .command('release')
   .description('tasks related to releases');
 
 release
   .command('describe')
-  .argument('<repo>', 'repository')
+  .argument('<repo>', 'owner or owner/repo')
+  .argument('[repo]', 'repo')
   .option('--from <from>', 'tag of the previous release', 'latest' as const)
   .option('--to <to>', 'tag of the current release')
   .addOption(
@@ -268,9 +287,9 @@ release
     ] as const)
   )
   .description('describe a release')
-  .action(async (repoOrReleasePath, options) => {
+  .action(async (first, second, options) => {
     const { from, to } = options;
-    const { owner, repo } = parseRepoPath(repoOrReleasePath);
+    const { owner, repo } = parseRepoArgs(first, second);
 
     const {
       persona,
@@ -325,7 +344,9 @@ release
 const pr = remote.command('pr').description('tasks related to pull requests');
 
 pr.command('describe')
-  .argument('<pr>', 'pull request')
+  .argument('<owner>', 'issue URL or owner/repo or owner')
+  .argument('[repo]', 'repository or PR number')
+  .argument('[number]', 'PR number', (val) => toInt(val, undefined))
   .addOption(
     new Option('-w, --write <write>', 'persona').choices([
       'pr',
@@ -336,9 +357,9 @@ pr.command('describe')
   .option('--template <template>', 'template file')
   .option('--prompt <prompt>', 'prompt file')
   .description('describe a pull request')
-  .action(async (pr, options) => {
+  .action(async (first, second, third, options) => {
     // TODO: support numbers alone when we have gh cli support
-    const { owner, repo, num } = parseIssueUrl(new URL(pr));
+    const { owner, repo, num } = parseIssueArgs(first, second, third);
 
     const {
       write,
@@ -380,7 +401,9 @@ pr.command('describe')
   });
 
 pr.command('label')
-  .argument('<pr>', 'pull request')
+  .argument('<owner>', 'issue URL or owner/repo or owner')
+  .argument('[repo]', 'repository or PR number')
+  .argument('[number]', 'PR number', (val) => toInt(val, undefined))
   .addOption(
     new Option('-w, --write <write>', 'update the labels').choices([
       'add',
@@ -393,8 +416,8 @@ pr.command('label')
     (val) => (val === 'existing' ? ('existing' as const) : val.split(','))
   )
   .description('label a pull request')
-  .action(async (pr, options) => {
-    const { owner, repo, num } = parseIssueUrl(new URL(pr));
+  .action(async (first, second, third, options) => {
+    const { owner, repo, num } = parseIssueArgs(first, second, third);
 
     const { write, exclude } = options;
 
