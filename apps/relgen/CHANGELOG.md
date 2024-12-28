@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.7
+
+### Patch Changes
+
+- 8d281ca: add a footer parameter to remote pr describe to identify relgen output
+- Updated dependencies [8d281ca]
+  - @relgen/core@0.0.4
+
 ## 0.0.6
 
 ### Patch Changes
