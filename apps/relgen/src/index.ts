@@ -332,6 +332,7 @@ pr.command('describe')
       'comment',
     ] as const)
   )
+  .option('--footer <footer>', 'footer')
   .option('--template <template>', 'template file')
   .option('--prompt <prompt>', 'prompt file')
   .description('describe a pull request')
@@ -339,7 +340,12 @@ pr.command('describe')
     // TODO: support numbers alone when we have gh cli support
     const { owner, repo, num } = parseIssueUrl(new URL(pr));
 
-    const { write, template: templateFile, prompt: promptFile } = options;
+    const {
+      write,
+      template: templateFile,
+      prompt: promptFile,
+      footer,
+    } = options;
 
     let template: string | undefined;
     let prompt: string | undefined;
@@ -362,6 +368,7 @@ pr.command('describe')
         write,
         template,
         prompt,
+        footer,
       }
     );
 

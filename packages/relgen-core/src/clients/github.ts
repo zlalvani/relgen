@@ -35,6 +35,24 @@ export const githubClient = (octo: Octokit) => {
   return {
     $rest: octo.rest as Octokit['rest'],
     rest: {
+      users: {
+        getAuthenticated: async () => {
+          const result = await tryit(() =>
+            octo.rest.users.getAuthenticated()
+          )();
+
+          if (!success(result)) {
+            const [error] = result;
+            if (error instanceof RequestError && error.status === 404) {
+              return null;
+            }
+            throw error;
+          }
+
+          const [_, response] = result;
+          return response;
+        },
+      },
       search: {
         issuesAndPullRequests: async (query: {
           repo?: {
