@@ -266,7 +266,7 @@ release
   .command('describe')
   .argument('<repo>', 'owner or owner/repo')
   .argument('[repo]', 'repo')
-  .option('--from <from>', 'tag of the previous release', 'latest' as const)
+  .option('--from <from>', 'tag of the previous release')
   .option('--to <to>', 'tag of the current release')
   .addOption(
     new Option('--persona <persona>', 'persona').choices([

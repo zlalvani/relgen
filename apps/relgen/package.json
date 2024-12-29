@@ -3,6 +3,7 @@
   "version": "0.0.9",
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
+    "debug": "pnpm with-env node --inspect=9229 dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
     "dev": "tsup src/index.ts --format esm --watch ./src --sourcemap --clean",
     "typecheck": "tsc --noEmit",
@@ -27,9 +28,7 @@
     "@relgen/core": "workspace:*",
     "zod": "^3.24.1"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^20.11.24",
