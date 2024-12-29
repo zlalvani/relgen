@@ -36,7 +36,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
-.vscode/launch.json
+# .vscode/launch.json
 **/log/*
 **/output/*
 .aider*
