@@ -1,5 +1,14 @@
 # relgen
 
+## 0.0.10
+
+### Patch Changes
+
+- 4963360: added title and complexity to remote pr describe, and embedded metadata in PR comments
+- 98b904a: removed broken release describe --from default argument
+- Updated dependencies [4963360]
+  - @relgen/core@0.0.6
+
 ## 0.0.9
 
 ### Patch Changes
