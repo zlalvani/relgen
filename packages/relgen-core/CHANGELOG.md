@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.6
+
+### Patch Changes
+
+- 4963360: added title and complexity to remote pr describe, and embedded metadata in PR comments
+
 ## 0.0.5
 
 ### Patch Changes
