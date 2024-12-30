@@ -148,6 +148,9 @@ export const languageModelService = (
         Use proper English grammar and punctuation like a native speaker.
         DO NOT RETURN A DESCRIPTION if you lack enough context.
         DO NOT RETURN A DESCRIPTION if the description is already good.
+        Complexity is "trivial" if it touches only one line of code or configuration.
+        Complexity is "minor" if it touches several lines of code in a handful of files.
+        Complexity is "major" if it's a significant refactor or adds a huge new feature (dozens of lines of code).
         `;
 
         const prompt = dedent`
@@ -181,7 +184,18 @@ export const languageModelService = (
         return await generateObject({
           model,
           schema: z.object({
-            description: z.string().optional(),
+            title: z
+              .string()
+              .describe(
+                'Your new PR title. Do not change it if it is already good.'
+              ),
+            description: z
+              .string()
+              .optional()
+              .describe('Your new PR description'),
+            complexity: z
+              .enum(['trivial', 'minor', 'major'])
+              .describe('Your estimate of the complexity of the PR'),
           }),
           system,
           prompt,

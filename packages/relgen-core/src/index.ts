@@ -151,9 +151,105 @@ const relgen = ({
 }) => {
   const { llm, github, logger } = deps;
 
+  const getReleasePrs = async ({
+    owner,
+    repo,
+    fromTag,
+    toTag,
+  }: {
+    owner: string;
+    repo: string;
+    fromTag?: string;
+    toTag?: string;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
+
+    const defaultBranch = githubRepo.data.default_branch;
+
+    if (!fromTag && !toTag) {
+      // If neither tag is provided, get the most recent release and all PRs after it
+      const latest = await github.rest.repos.getLatestRelease({
+        owner,
+        repo,
+      });
+
+      return await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: latest?.data.published_at
+          ? new Date(latest.data.published_at)
+          : undefined,
+      });
+    }
+
+    const from = fromTag
+      ? await github.$rest.repos.getReleaseByTag({
+          owner,
+          repo,
+          tag: fromTag,
+        })
+      : undefined;
+
+    const to = toTag
+      ? await github.$rest.repos.getReleaseByTag({
+          owner,
+          repo,
+          tag: toTag,
+        })
+      : undefined;
+
+    return await github.rest.search.issuesAndPullRequests({
+      repo: {
+        owner,
+        repo,
+      },
+      type: 'pr',
+      base: defaultBranch,
+      status: 'merged',
+      mergedAfter: from?.data.published_at
+        ? new Date(from.data.published_at)
+        : undefined,
+      mergedBefore: to?.data.published_at
+        ? new Date(to.data.published_at)
+        : undefined,
+    });
+  };
+
   return {
     remote: {
       release: {
+        ascribe: async (
+          args: {
+            owner: string;
+            repo: string;
+            toTag?: string;
+            fromTag?: string;
+          }
+          // options: {}
+        ) => {
+          const { owner, repo, toTag, fromTag } = args;
+
+          const newPrs = await getReleasePrs({
+            owner,
+            repo,
+            fromTag,
+            toTag,
+          });
+
+          if (!newPrs.data.items.length) {
+            return null;
+          }
+
+          throw new Error('Not implemented');
+        },
         describe: async (
           args: {
             owner: string;
@@ -182,67 +278,12 @@ const relgen = ({
         ) => {
           const { owner, repo, toTag, fromTag } = args;
 
-          const githubRepo = await github.$rest.repos.get({
+          const newPrs = await getReleasePrs({
             owner,
             repo,
+            fromTag,
+            toTag,
           });
-
-          const defaultBranch = githubRepo.data.default_branch;
-
-          const newPrs = await (async () => {
-            // If neither tag is provided, get the most recent release and all PRs after it
-            if (!fromTag && !toTag) {
-              const latest = await github.rest.repos.getLatestRelease({
-                owner,
-                repo,
-              });
-
-              return await github.rest.search.issuesAndPullRequests({
-                repo: {
-                  owner,
-                  repo,
-                },
-                type: 'pr',
-                base: defaultBranch,
-                status: 'merged',
-                mergedAfter: latest?.data.published_at
-                  ? new Date(latest.data.published_at)
-                  : undefined,
-              });
-            }
-
-            const from = fromTag
-              ? await github.$rest.repos.getReleaseByTag({
-                  owner,
-                  repo,
-                  tag: fromTag,
-                })
-              : undefined;
-
-            const to = toTag
-              ? await github.$rest.repos.getReleaseByTag({
-                  owner,
-                  repo,
-                  tag: toTag,
-                })
-              : undefined;
-
-            return await github.rest.search.issuesAndPullRequests({
-              repo: {
-                owner,
-                repo,
-              },
-              type: 'pr',
-              base: defaultBranch,
-              status: 'merged',
-              mergedAfter: from?.data.published_at
-                ? new Date(from.data.published_at)
-                : undefined,
-              mergedBefore: to?.data.published_at
-                ? new Date(to.data.published_at)
-                : undefined,
-            });
-          })();
 
           if (!newPrs.data.items.length) {
             return null;
@@ -318,7 +359,7 @@ const relgen = ({
             num: number;
           },
           options?: {
-            write?: 'pr' | 'comment' | false;
+            write?: ('title' | 'comment' | 'description')[] | false;
             template?: string;
             prompt?: string;
             footer?: string;
@@ -327,6 +368,10 @@ const relgen = ({
           const { owner, repo, num } = args;
 
           let { footer, prompt, template } = options ?? {};
+
+          const selectedWrites = Array.isArray(options?.write)
+            ? new Set(options.write)
+            : undefined;
 
           const [pr, diff] = await Promise.all([
             github.$rest.pulls.get({
@@ -395,8 +440,8 @@ const relgen = ({
               },
             },
             {
-              template: options?.template,
-              prompt: options?.prompt,
+              template,
+              prompt,
             }
           );
 
@@ -404,18 +449,35 @@ const relgen = ({
             footer ??
             '<!-- Generated by [Relgen](https://github.com/zlalvani/relgen) -->';
 
+          const metadata = dedent`
+          <!-- METADATA
+          ${JSON.stringify({
+            title: result.object.title,
+            complexity: result.object.complexity,
+          })}
+          -->
+          `;
+
           const body = result.object.description
-            ? `${result.object.description}\n\n${footer}`
+            ? `${result.object.description}\n\n${footer}\n\n${metadata}`
             : undefined;
 
-          if (options?.write === 'pr') {
+          if (
+            selectedWrites?.has('description') ||
+            selectedWrites?.has('title')
+          ) {
             await github.$rest.pulls.update({
               owner,
               repo,
               pull_number: num,
-              body,
+              title: selectedWrites?.has('title')
+                ? result.object.title
+                : undefined,
+              body: selectedWrites?.has('description') ? body : undefined,
             });
-          } else if (options?.write === 'comment' && body) {
+          }
+
+          if (selectedWrites?.has('comment') && body) {
             const comments = await github.$rest.issues.listComments({
               owner,
               repo,

@@ -7,6 +7,7 @@ import { type Relgen, createRelgen } from '@relgen/core';
 import kleur from 'kleur';
 import pino from 'pino';
 import { toInt } from 'radashi';
+import { z } from 'zod';
 import {
   type Config,
   anthropicModelChoices,
@@ -347,11 +348,11 @@ pr.command('describe')
   .argument('<owner>', 'issue URL or owner/repo or owner')
   .argument('[repo]', 'repository or PR number')
   .argument('[number]', 'PR number', (val) => toInt(val, undefined))
-  .addOption(
-    new Option('-w, --write <write>', 'persona').choices([
-      'pr',
-      'comment',
-    ] as const)
+  .option(
+    '-w, --write <write>',
+    'which part of the pr to write to (comma separated list of title,description,comment)',
+    (val) =>
+      z.array(z.enum(['comment', 'title', 'description'])).parse(val.split(','))
   )
   .option('--footer <footer>', 'footer')
   .option('--template <template>', 'template file')
@@ -394,7 +395,9 @@ pr.command('describe')
     );
 
     if (result.description) {
+      log(result.title);
       log(result.description);
+      log(result.complexity);
     } else {
       log(kleur.red('No description was generated'));
     }
