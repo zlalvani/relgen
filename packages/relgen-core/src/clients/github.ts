@@ -4,26 +4,45 @@ import { Octokit, RequestError } from 'octokit';
 import { toInt, tryit } from 'radashi';
 import { z } from 'zod';
 
-const closingIssuesReferencesSchema = z.object({
-  closingIssuesReferences: z.object({
-    nodes: z.array(
-      z.object({
-        number: z.number(),
-        title: z.string(),
-        url: z.string(),
-        body: z.string(),
-      })
-    ),
-  }),
+const IssueSchema = z.object({
+  number: z.number(),
+  title: z.string(),
+  url: z.string(),
+  body: z.string(),
 });
 
-const batchClosingIssuesReferencesSchema = z.object({
+const BatchClosingIssuesReferencesSchema = z.object({
   repository: z.record(
     z
       .string()
       .regex(/pr(\d+)/)
       .transform((key) => key as `pr${number}`),
-    closingIssuesReferencesSchema
+    z.object({
+      closingIssuesReferences: z.object({
+        nodes: z.array(IssueSchema),
+      }),
+    })
+  ),
+});
+
+const PullRequestCommentSchema = z.object({
+  author: z.object({
+    login: z.string(),
+  }),
+  body: z.string().optional(),
+});
+
+const BatchPullRequestCommentsSchema = z.object({
+  repository: z.record(
+    z
+      .string()
+      .regex(/pr(\d+)/)
+      .transform((key) => key as `pr${number}`),
+    z.object({
+      comments: z.object({
+        nodes: z.array(PullRequestCommentSchema),
+      }),
+    })
   ),
 });
 
@@ -160,9 +179,6 @@ export const githubClient = (octo: Octokit) => {
 
           if (!success(result)) {
             const [error] = result;
-            if (error instanceof RequestError && error.status === 404) {
-              return null;
-            }
             throw error;
           }
 
@@ -181,40 +197,6 @@ export const githubClient = (octo: Octokit) => {
     graphql: {
       repo: {
         pull: {
-          closingIssuesReferences: async ({
-            owner,
-            repo,
-            num,
-          }: {
-            owner: string;
-            repo: string;
-            num: number;
-          }) => {
-            const query = dedent`
-              query ($owner: String!, $repo: String!, $num: Int!) {
-                repository(owner: $owner, name: $repo) {
-                  pullRequest(number: $num) {
-                    closingIssuesReferences(first: 50) {
-                      nodes {
-                        number
-                        title
-                        url
-                        body
-                      }
-                    }
-                  }
-                }
-              }
-            `;
-
-            const response = await octo.graphql(query, {
-              owner,
-              repo,
-              num,
-            });
-
-            return closingIssuesReferencesSchema.parse(response);
-          },
           batchClosingIssuesReferences: async ({
             owner,
             repo,
@@ -254,7 +236,7 @@ export const githubClient = (octo: Octokit) => {
             });
 
             return Object.entries(
-              batchClosingIssuesReferencesSchema.parse(response).repository
+              BatchClosingIssuesReferencesSchema.parse(response).repository
             )
               .filter(
                 <L, R>(pair: [L, R | undefined]): pair is [L, R] => !!pair[1]
@@ -262,6 +244,54 @@ export const githubClient = (octo: Octokit) => {
               .map(([key, value]) => ({
                 num: toInt(key.slice(2)),
                 issues: value.closingIssuesReferences.nodes,
+              }));
+          },
+          batchPullRequestComments: async ({
+            owner,
+            repo,
+            nums,
+          }: {
+            owner: string;
+            repo: string;
+            nums: number[];
+          }) => {
+            const query = dedent`
+              query ($owner: String!, $repo: String!, $nums: [Int!]!) {
+                repository(owner: $owner, name: $repo) {
+                  ${nums
+                    .map(
+                      (num) => `
+                    pr${num}: pullRequest(number: ${num}) {
+                      comments(first: 50) {
+                        nodes {
+                          author {
+                            login
+                          }
+                          body
+                        }
+                      }
+                    }`
+                    )
+                    .join('\n')}
+                }
+              }
+            `;
+
+            const response = await octo.graphql(query, {
+              owner,
+              repo,
+              nums,
+            });
+
+            return Object.entries(
+              BatchPullRequestCommentsSchema.parse(response).repository
+            )
+              .filter(
+                <L, R>(pair: [L, R | undefined]): pair is [L, R] => !!pair[1]
+              )
+              .map(([key, value]) => ({
+                num: toInt(key.slice(2)),
+                comments: value.comments.nodes,
               }));
           },
         },
