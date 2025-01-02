@@ -381,7 +381,15 @@ const relgen = ({
             .map(([author, items]) => {
               return {
                 author,
-                items: items.map((item) => item.metadata),
+                items: items.map((item) => {
+                  return {
+                    pr: {
+                      title: item.pr.title,
+                      url: item.pr.html_url,
+                    },
+                    relgen: item.metadata,
+                  };
+                }),
               };
             });
         },

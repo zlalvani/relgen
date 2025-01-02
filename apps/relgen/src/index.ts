@@ -342,6 +342,41 @@ release
     }
   });
 
+release
+  .command('ascribe')
+  .argument('<repo>', 'owner or owner/repo')
+  .argument('[repo]', 'repo')
+  .option('--to <to>', 'tag of the current release')
+  .option('--from <from>', 'tag of the previous release')
+  .option('--excluded-pattern <pattern>', 'regex pattern to exclude PRs')
+  .description('')
+  .action(async (first, second, options) => {
+    const { from, to, excludedPattern } = options;
+    const { owner, repo } = parseRepoArgs(first, second);
+
+    const result = await relgen.remote.release.ascribe({
+      owner,
+      repo,
+      fromTag: from,
+      toTag: to,
+      excludedPattern: excludedPattern
+        ? new RegExp(excludedPattern)
+        : undefined,
+    });
+
+    if (result) {
+      for (const { author, items } of result) {
+        log(`## ${author}`);
+        for (const item of items) {
+          log(`- ${item.pr.title}: ${item.pr.url}`);
+          log(`  ${item.relgen.complexity}`);
+        }
+      }
+    } else {
+      log(kleur.red('No changes found'));
+    }
+  });
+
 const pr = remote.command('pr').description('tasks related to pull requests');
 
 pr.command('describe')
