@@ -256,7 +256,7 @@ export const githubClient = (octo: Octokit) => {
             nums: number[];
           }) => {
             const query = dedent`
-              query ($owner: String!, $repo: String!, $nums: [Int!]!) {
+              query ($owner: String!, $repo: String!) {
                 repository(owner: $owner, name: $repo) {
                   ${nums
                     .map(

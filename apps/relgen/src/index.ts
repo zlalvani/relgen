@@ -349,7 +349,7 @@ release
   .option('--to <to>', 'tag of the current release')
   .option('--from <from>', 'tag of the previous release')
   .option('--excluded-pattern <pattern>', 'regex pattern to exclude PRs')
-  .description('generate release notes with PR metadata')
+  .description('')
   .action(async (first, second, options) => {
     const { from, to, excludedPattern } = options;
     const { owner, repo } = parseRepoArgs(first, second);
@@ -359,17 +359,17 @@ release
       repo,
       fromTag: from,
       toTag: to,
-      excludedPattern: excludedPattern ? new RegExp(excludedPattern) : undefined,
+      excludedPattern: excludedPattern
+        ? new RegExp(excludedPattern)
+        : undefined,
     });
 
     if (result) {
       for (const { author, items } of result) {
-        log(`\n## ${author}`);
+        log(`## ${author}`);
         for (const item of items) {
-          log(`- ${item.title}`);
-          if (item.description) {
-            log(`  ${item.description}`);
-          }
+          log(`- ${item.pr.title}: ${item.pr.url}`);
+          log(`  ${item.relgen.complexity}`);
         }
       }
     } else {
