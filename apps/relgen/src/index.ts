@@ -342,6 +342,8 @@ release
     }
   });
 
+release.command('ascribe');
+
 const pr = remote.command('pr').description('tasks related to pull requests');
 
 pr.command('describe')
