@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.7
+
+### Patch Changes
+
+- d305921: new release ascribe command and corresponding core function
+
 ## 0.0.6
 
 ### Patch Changes
