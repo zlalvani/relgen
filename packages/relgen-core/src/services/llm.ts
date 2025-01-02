@@ -13,6 +13,18 @@ import type {
   TicketContext,
 } from '../contexts';
 
+export const PullRequestDescribeSchema = z.object({
+  title: z
+    .string()
+    .describe('Your new PR title. Do not change it if it is already good.'),
+  description: z.string().optional().describe('Your new PR description'),
+  complexity: z
+    .enum(['trivial', 'minor', 'major'])
+    .describe('Your estimate of the complexity of the PR'),
+});
+
+export type PullRequestDescribe = z.infer<typeof PullRequestDescribeSchema>;
+
 export const languageModelService = (
   model: LanguageModel,
   logger: pino.Logger
@@ -183,20 +195,7 @@ export const languageModelService = (
 
         return await generateObject({
           model,
-          schema: z.object({
-            title: z
-              .string()
-              .describe(
-                'Your new PR title. Do not change it if it is already good.'
-              ),
-            description: z
-              .string()
-              .optional()
-              .describe('Your new PR description'),
-            complexity: z
-              .enum(['trivial', 'minor', 'major'])
-              .describe('Your estimate of the complexity of the PR'),
-          }),
+          schema: PullRequestDescribeSchema,
           system,
           prompt,
         });
