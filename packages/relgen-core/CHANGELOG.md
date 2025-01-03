@@ -1,5 +1,12 @@
 # @relgen/core
 
+## 0.0.8
+
+### Patch Changes
+
+- 249f5a7: added pr ascribe command; added --unreleased argument to release ascribe and release describe
+- 6c96986: moved pr ascribe to remote ascribe
+
 ## 0.0.7
 
 ### Patch Changes
