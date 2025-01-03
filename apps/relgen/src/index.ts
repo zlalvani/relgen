@@ -217,6 +217,56 @@ const parseIssueArgs = (
   return { owner, repo, num: toInt(num) };
 };
 
+remote
+  .command('ascribe')
+  .argument('<owner>', 'owner or owner/repo')
+  .argument('[repo]', 'repo')
+  .option('--range <range>', 'a natural language time range (uses chrono-node)')
+  .option(
+    '--excluded-pattern <pattern>',
+    'regex pattern to exclude PRs',
+    (val) => new RegExp(val)
+  )
+  .action(async (first, second, options) => {
+    const { owner, repo } = parseRepoArgs(first, second);
+
+    let from: Date | undefined, to: Date | undefined;
+    const { excludedPattern, range } = options;
+
+    if (range) {
+      const parsed = chrono.parse(range);
+
+      if (parsed[0]) {
+        from = parsed[0].start.date();
+        to = parsed[0].end?.date();
+      }
+    }
+
+    const result = await relgen.remote.ascribe(
+      {
+        owner,
+        repo,
+        from,
+        to,
+      },
+      {
+        excludedPattern,
+      }
+    );
+
+    if (result) {
+      for (const { author, items } of result) {
+        log(`## ${author}`);
+        for (const item of items) {
+          log(`- ${item.pr.title}: ${item.pr.url}`);
+          log(`  ${item.relgen.complexity}`);
+        }
+      }
+    } else {
+      log(kleur.red('No changes found'));
+    }
+  });
+
 const issue = remote.command('issue').description('tasks related to issues');
 
 issue
@@ -481,55 +531,6 @@ pr.command('describe')
       log(result.complexity);
     } else {
       log(kleur.red('No description was generated'));
-    }
-  });
-
-pr.command('ascribe')
-  .argument('<owner>', 'owner or owner/repo')
-  .argument('[repo]', 'repo')
-  .option('--range <range>', 'a natural language time range (uses chrono-node)')
-  .option(
-    '--excluded-pattern <pattern>',
-    'regex pattern to exclude PRs',
-    (val) => new RegExp(val)
-  )
-  .action(async (first, second, options) => {
-    const { owner, repo } = parseRepoArgs(first, second);
-
-    let from: Date | undefined, to: Date | undefined;
-    const { excludedPattern, range } = options;
-
-    if (range) {
-      const parsed = chrono.parse(range);
-
-      if (parsed[0]) {
-        from = parsed[0].start.date();
-        to = parsed[0].end?.date();
-      }
-    }
-
-    const result = await relgen.remote.pr.ascribe(
-      {
-        owner,
-        repo,
-        from,
-        to,
-      },
-      {
-        excludedPattern,
-      }
-    );
-
-    if (result) {
-      for (const { author, items } of result) {
-        log(`## ${author}`);
-        for (const item of items) {
-          log(`- ${item.pr.title}: ${item.pr.url}`);
-          log(`  ${item.relgen.complexity}`);
-        }
-      }
-    } else {
-      log(kleur.red('No changes found'));
     }
   });
 

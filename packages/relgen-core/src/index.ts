@@ -421,6 +421,30 @@ const relgen = ({
 
   return {
     remote: {
+      ascribe: async (
+        args: {
+          owner: string;
+          repo: string;
+          from?: Date;
+          to?: Date;
+        },
+        options?: {
+          excludedPattern?: RegExp;
+        }
+      ) => {
+        const { owner, repo, from, to } = args;
+        const prs = (await getTimerangePrs({ owner, repo, from, to })).filter(
+          (pr) =>
+            !options?.excludedPattern ||
+            !options?.excludedPattern.test(pr.title)
+        );
+
+        return ascribePrs({
+          owner,
+          repo,
+          prs,
+        });
+      },
       release: {
         ascribe: async (
           args: {
@@ -576,30 +600,6 @@ const relgen = ({
         },
       },
       pr: {
-        ascribe: async (
-          args: {
-            owner: string;
-            repo: string;
-            from?: Date;
-            to?: Date;
-          },
-          options?: {
-            excludedPattern?: RegExp;
-          }
-        ) => {
-          const { owner, repo, from, to } = args;
-          const prs = (await getTimerangePrs({ owner, repo, from, to })).filter(
-            (pr) =>
-              !options?.excludedPattern ||
-              !options?.excludedPattern.test(pr.title)
-          );
-
-          return ascribePrs({
-            owner,
-            repo,
-            prs,
-          });
-        },
         describe: async (
           args: {
             owner: string;
