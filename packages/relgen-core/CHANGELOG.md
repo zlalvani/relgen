@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.9
+
+### Patch Changes
+
+- 3aea91d: properly handle newlines in github comments when deserializing metadata
+
 ## 0.0.8
 
 ### Patch Changes
