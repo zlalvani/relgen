@@ -178,7 +178,42 @@ const relgen = ({
 }) => {
   const { llm, github, logger } = deps;
 
-  const getReleasePrs = async ({
+  const getUnreleasedPrs = async ({
+    owner,
+    repo,
+  }: {
+    owner: string;
+    repo: string;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
+
+    const defaultBranch = githubRepo.data.default_branch;
+
+    const latest = await github.rest.repos.getLatestRelease({
+      owner,
+      repo,
+    });
+
+    return (
+      await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: latest?.data.published_at
+          ? new Date(latest.data.published_at)
+          : undefined,
+      })
+    ).data.items;
+  };
+
+  const getPrsBetweenTags = async ({
     owner,
     repo,
     fromTag,
@@ -195,29 +230,6 @@ const relgen = ({
     });
 
     const defaultBranch = githubRepo.data.default_branch;
-
-    if (!fromTag && !toTag) {
-      // If neither tag is provided, get the most recent release and all PRs after it
-      const latest = await github.rest.repos.getLatestRelease({
-        owner,
-        repo,
-      });
-
-      return (
-        await github.rest.search.issuesAndPullRequests({
-          repo: {
-            owner,
-            repo,
-          },
-          type: 'pr',
-          base: defaultBranch,
-          status: 'merged',
-          mergedAfter: latest?.data.published_at
-            ? new Date(latest.data.published_at)
-            : undefined,
-        })
-      ).data.items;
-    }
 
     const from = fromTag
       ? await github.$rest.repos.getReleaseByTag({
@@ -254,91 +266,106 @@ const relgen = ({
     ).data.items;
   };
 
-  return {
-    remote: {
-      release: {
-        ascribe: async (
-          args: {
-            owner: string;
-            repo: string;
-            toTag?: string;
-            fromTag?: string;
-            excludedPattern?: RegExp;
-          }
-          // options: {}
-        ) => {
-          const { owner, repo, toTag, fromTag } = args;
+  const getTimerangePrs = async ({
+    owner,
+    repo,
+    from,
+    to,
+  }: {
+    owner: string;
+    repo: string;
+    from?: Date;
+    to?: Date;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
 
-          const newPrs = (
-            await getReleasePrs({
-              owner,
-              repo,
-              fromTag,
-              toTag,
-            })
-          ).filter(
-            (pr) =>
-              !args.excludedPattern || !args.excludedPattern.test(pr.title)
-          );
+    const defaultBranch = githubRepo.data.default_branch;
 
-          if (!newPrs.length) {
-            return null;
-          }
+    return (
+      await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: from,
+        mergedBefore: to,
+      })
+    ).data.items;
+  };
 
-          const comments =
-            await github.graphql.repo.pull.batchPullRequestComments({
-              owner,
-              repo,
-              nums: newPrs.map((pr) => pr.number),
-            });
+  const ascribePrs = async ({
+    owner,
+    repo,
+    prs,
+  }: {
+    owner: string;
+    repo: string;
+    prs: Awaited<
+      ReturnType<
+        | typeof getUnreleasedPrs
+        | typeof getPrsBetweenTags
+        | typeof getTimerangePrs
+      >
+    >;
+  }) => {
+    const comments = await github.graphql.repo.pull.batchPullRequestComments({
+      owner,
+      repo,
+      nums: prs.map((pr) => pr.number),
+    });
 
-          const commentsLookup = comments.reduce((acc, curr) => {
-            acc.set(curr.num, curr.comments);
-            return acc;
-          }, new Map<number, (typeof comments)[number]['comments']>());
+    const commentsLookup = comments.reduce((acc, curr) => {
+      acc.set(curr.num, curr.comments);
+      return acc;
+    }, new Map<number, (typeof comments)[number]['comments']>());
 
-          const metadata = await parallel(
-            3,
-            newPrs.filter((pr) => commentsLookup.has(pr.number)),
-            async (pr) => {
-              // biome-ignore lint/style/noNonNullAssertion: <already filtered>
-              const prComments = commentsLookup.get(pr.number)!;
+    const metadata = await parallel(
+      3,
+      prs.filter((pr) => commentsLookup.has(pr.number)),
+      async (pr) => {
+        // biome-ignore lint/style/noNonNullAssertion: <already filtered>
+        const prComments = commentsLookup.get(pr.number)!;
 
-              // TODO: also filter for author
-              const relgenComment = pr.body?.includes(RELGEN_TAG)
-                ? pr.body
-                : prComments.find((comment) =>
-                    comment.body?.includes(RELGEN_TAG)
-                  )?.body;
+        // TODO: also filter for author
+        const relgenComment = pr.body?.includes(RELGEN_TAG)
+          ? pr.body
+          : prComments.find((comment) => comment.body?.includes(RELGEN_TAG))
+              ?.body;
 
-              return {
-                pr,
-                metadata:
-                  getPullRequestRelgenMetadata(relgenComment) ??
-                  (await (async () => {
-                    const diff = await github.rest.pulls.diff({
-                      owner,
-                      repo,
-                      num: pr.number,
-                    });
-                    const result = await llm.pr.describe({
-                      change: {
-                        pr: makeContext({
-                          source: 'github',
-                          type: 'pr',
-                          data: pr,
-                          prompt: dedent`
+        return {
+          pr,
+          metadata:
+            getPullRequestRelgenMetadata(relgenComment) ??
+            (await (async () => {
+              const diff = await github.rest.pulls.diff({
+                owner,
+                repo,
+                num: pr.number,
+              });
+              const result = await llm.pr.describe({
+                change: {
+                  pr: makeContext({
+                    source: 'github',
+                    type: 'pr',
+                    data: pr,
+                    prompt: dedent`
                       <pr>
                         <title>${pr.title}</title>
                         <body>${pr.body}</body>
                       </pr>
                       `,
-                        }),
-                        diff: makeContext({
-                          source: 'github',
-                          type: 'diff',
-                          data: diff,
-                          prompt: dedent`
+                  }),
+                  diff: makeContext({
+                    source: 'github',
+                    type: 'diff',
+                    data: diff,
+                    prompt: dedent`
                       <diff>
                         <raw>
                         ${serializeToGitHubDiff(
@@ -362,44 +389,96 @@ const relgen = ({
                         </raw>
                       </diff>
                       `,
-                        }),
-                      },
-                    });
+                  }),
+                },
+              });
 
-                    return result.object;
-                  })()),
-              };
+              return result.object;
+            })()),
+        };
+      }
+    );
+
+    return Object.entries(
+      group(metadata, (item) => item.pr.user?.login ?? 'unknown')
+    )
+      .filter(<K, V>(entry: [K, V | undefined]): entry is [K, V] => !!entry[1])
+      .map(([author, items]) => {
+        return {
+          author,
+          items: items.map((item) => {
+            return {
+              pr: {
+                title: item.pr.title,
+                url: item.pr.html_url,
+              },
+              relgen: item.metadata,
+            };
+          }),
+        };
+      });
+  };
+
+  return {
+    remote: {
+      release: {
+        ascribe: async (
+          args: {
+            owner: string;
+            repo: string;
+          } & MergeExclusive<
+            {
+              toTag?: string;
+              fromTag?: string;
+            },
+            {
+              unreleased?: true;
             }
+          >,
+          options?: {
+            excludedPattern?: RegExp;
+          }
+        ) => {
+          const { owner, repo, toTag, fromTag, unreleased } = args;
+
+          const selectedPrs = (
+            unreleased
+              ? await getUnreleasedPrs({ owner, repo })
+              : await getPrsBetweenTags({
+                  owner,
+                  repo,
+                  fromTag,
+                  toTag,
+                })
+          ).filter(
+            (pr) =>
+              !options?.excludedPattern ||
+              !options?.excludedPattern.test(pr.title)
           );
 
-          return Object.entries(
-            group(metadata, (item) => item.pr.user?.login ?? 'unknown')
-          )
-            .filter(
-              <K, V>(entry: [K, V | undefined]): entry is [K, V] => !!entry[1]
-            )
-            .map(([author, items]) => {
-              return {
-                author,
-                items: items.map((item) => {
-                  return {
-                    pr: {
-                      title: item.pr.title,
-                      url: item.pr.html_url,
-                    },
-                    relgen: item.metadata,
-                  };
-                }),
-              };
-            });
+          if (!selectedPrs.length) {
+            return null;
+          }
+
+          return ascribePrs({
+            owner,
+            repo,
+            prs: selectedPrs,
+          });
         },
         describe: async (
           args: {
             owner: string;
             repo: string;
-            toTag?: string;
-            fromTag?: string;
-          },
+          } & MergeExclusive<
+            {
+              toTag?: string;
+              fromTag?: string;
+            },
+            {
+              unreleased?: true;
+            }
+          >,
           options?: {
             persona?: 'marketing' | 'engineering' | 'product' | 'leadership';
             write?:
@@ -419,14 +498,16 @@ const relgen = ({
                 };
           }
         ) => {
-          const { owner, repo, toTag, fromTag } = args;
+          const { owner, repo, toTag, fromTag, unreleased } = args;
 
-          const newPrs = await getReleasePrs({
-            owner,
-            repo,
-            fromTag,
-            toTag,
-          });
+          const newPrs = unreleased
+            ? await getUnreleasedPrs({ owner, repo })
+            : await getPrsBetweenTags({
+                owner,
+                repo,
+                fromTag,
+                toTag,
+              });
 
           if (!newPrs.length) {
             return null;
@@ -495,6 +576,30 @@ const relgen = ({
         },
       },
       pr: {
+        ascribe: async (
+          args: {
+            owner: string;
+            repo: string;
+            from?: Date;
+            to?: Date;
+          },
+          options?: {
+            excludedPattern?: RegExp;
+          }
+        ) => {
+          const { owner, repo, from, to } = args;
+          const prs = (await getTimerangePrs({ owner, repo, from, to })).filter(
+            (pr) =>
+              !options?.excludedPattern ||
+              !options?.excludedPattern.test(pr.title)
+          );
+
+          return ascribePrs({
+            owner,
+            repo,
+            prs,
+          });
+        },
         describe: async (
           args: {
             owner: string;
