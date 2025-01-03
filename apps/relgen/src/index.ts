@@ -5,6 +5,7 @@ import { Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
 import { type Relgen, createRelgen } from '@relgen/core';
 import * as chrono from 'chrono-node/en';
+import dedent from 'dedent';
 import kleur from 'kleur';
 import pino from 'pino';
 import { toInt } from 'radashi';
@@ -31,9 +32,13 @@ let resolvedOpts: {
 
 let configFile: Config | undefined;
 
-const log = (message: string) => {
+const output = <T extends object>(obj: T, serialize?: (obj: T) => string) => {
   if (!cli.opts().silent) {
-    console.log(message);
+    if (cli.opts().json) {
+      console.log(JSON.stringify(obj));
+    } else {
+      console.log(serialize ? serialize(obj) : obj);
+    }
   }
 };
 
@@ -42,6 +47,7 @@ const cli = program
   .option('-t, --llm-token <token>', 'llm token')
   .option('-s, --silent', 'do not print output')
   .option('-c, --config <config>', 'config file')
+  .option('--json', 'output as json')
   .addOption(
     new Option('-v, --verbose', 'verbose output (debug statements)').conflicts(
       'silent'
@@ -255,15 +261,21 @@ remote
     );
 
     if (result) {
-      for (const { author, items } of result) {
-        log(`## ${author}`);
-        for (const item of items) {
-          log(`- ${item.pr.title}: ${item.pr.url}`);
-          log(`  ${item.relgen.complexity}`);
+      output(result, (result) => {
+        const lines: string[] = [];
+
+        for (const { author, items } of result) {
+          lines.push(`## ${author}`);
+          for (const item of items) {
+            lines.push(`- ${item.pr.title}: ${item.pr.url}`);
+            lines.push(`  ${item.relgen.complexity}`);
+          }
         }
-      }
+
+        return lines.join('\n');
+      });
     } else {
-      log(kleur.red('No changes found'));
+      output([], () => kleur.red('No changes found'));
     }
   });
 
@@ -303,11 +315,11 @@ issue
       }
     );
 
-    if (result.labels.length > 0) {
-      log(result.labels.join(', '));
-    } else {
-      log(kleur.red('No labels added'));
-    }
+    output(result, (result) =>
+      result.labels.length
+        ? result.labels.join(', ')
+        : kleur.red('No labels added')
+    );
   });
 
 const release = remote
@@ -407,9 +419,9 @@ release
         );
 
     if (result) {
-      log(result.description);
+      output(result, (result) => result.description);
     } else {
-      log(kleur.red('No changes found'));
+      output({}, () => kleur.red('No changes found'));
     }
   });
 
@@ -461,15 +473,21 @@ release
         );
 
     if (result) {
-      for (const { author, items } of result) {
-        log(`## ${author}`);
-        for (const item of items) {
-          log(`- ${item.pr.title}: ${item.pr.url}`);
-          log(`  ${item.relgen.complexity}`);
+      output(result, (result) => {
+        const lines: string[] = [];
+
+        for (const { author, items } of result) {
+          lines.push(`## ${author}`);
+          for (const item of items) {
+            lines.push(`- ${item.pr.title}: ${item.pr.url}`);
+            lines.push(`  ${item.relgen.complexity}`);
+          }
         }
-      }
+
+        return lines.join('\n');
+      });
     } else {
-      log(kleur.red('No changes found'));
+      output([], () => kleur.red('No changes found'));
     }
   });
 
@@ -525,13 +543,13 @@ pr.command('describe')
       }
     );
 
-    if (result.description) {
-      log(result.title);
-      log(result.description);
-      log(result.complexity);
-    } else {
-      log(kleur.red('No description was generated'));
-    }
+    output(result, (result) => {
+      return dedent`
+        # ${result.title}
+        complexity: ${result.complexity}
+        description: ${result.description || ''}
+      `;
+    });
   });
 
 pr.command('label')
@@ -567,11 +585,11 @@ pr.command('label')
       }
     );
 
-    if (result.labels.length > 0) {
-      log(result.labels.join(', '));
-    } else {
-      log(kleur.red('No labels added'));
-    }
+    output(result, (result) =>
+      result.labels.length
+        ? result.labels.join(', ')
+        : kleur.red('No labels added')
+    );
   });
 
 await cli.parseAsync();
