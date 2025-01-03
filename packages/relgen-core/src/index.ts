@@ -73,7 +73,10 @@ function getPullRequestRelgenMetadata(body?: string) {
   }
 
   const parsed = PullRequestDescribeSchema.safeParse(
-    JSON.parse(body.match(/<!-- METADATA\n(.*?)\n-->/s)?.[1] ?? '{}')
+    JSON.parse(
+      body.match(/<!-- METADATA\n(.*?)\n-->/s)?.[1]?.replaceAll('\n', '\\n') ??
+        '{}'
+    )
   );
 
   if (!parsed.success) {
