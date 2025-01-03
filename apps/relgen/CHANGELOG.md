@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.13
+
+### Patch Changes
+
+- 26b8063: added `--json` option to output as json
+- Updated dependencies [3aea91d]
+  - @relgen/core@0.0.9
+
 ## 0.0.12
 
 ### Patch Changes
