@@ -42,6 +42,9 @@ importers:
       '@relgen/core':
         specifier: workspace:*
         version: link:../../packages/relgen-core
+      chrono-node:
+        specifier: ^2.7.7
+        version: 2.7.7
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -894,6 +897,10 @@ packages:
     resolution: {integrity: sha512-n8enUVCED/KVRQlab1hr3MVpcVMvxtZjmEa956u+4YijlmQED223XMSYj2tLuKvr4jcCTzNNMpQDUer72MMmzA==}
     engines: {node: '>= 14.16.0'}
 
+  chrono-node@2.7.7:
+    resolution: {integrity: sha512-p3S7gotuTPu5oqhRL2p1fLwQXGgdQaRTtWR3e8Di9P1Pa9mzkK5DWR5AWBieMUh2ZdOnPgrK+zCrbbtyuA+D/Q==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+
   ci-info@3.9.0:
     resolution: {integrity: sha512-NIxF55hv4nSqQswkAeiOi1r83xy8JldOFDTWiug55KBu9Jnblncd2U6ViHmYgHf01TPZS77NJBhBMKdWj9HQMQ==}
     engines: {node: '>=8'}
@@ -933,6 +940,9 @@ packages:
 
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
+
+  dayjs@1.11.13:
+    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
 
   debug@4.4.0:
     resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
@@ -2450,6 +2460,10 @@ snapshots:
     dependencies:
       readdirp: 4.0.2
 
+  chrono-node@2.7.7:
+    dependencies:
+      dayjs: 1.11.13
+
   ci-info@3.9.0: {}
 
   cli-width@4.1.0: {}
@@ -2477,6 +2491,8 @@ snapshots:
       which: 2.0.2
 
   dateformat@4.6.3: {}
+
+  dayjs@1.11.13: {}
 
   debug@4.4.0:
     dependencies:

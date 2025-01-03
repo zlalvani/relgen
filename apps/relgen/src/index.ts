@@ -4,6 +4,7 @@ import { URL } from 'node:url';
 import { Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
 import { type Relgen, createRelgen } from '@relgen/core';
+import * as chrono from 'chrono-node/en';
 import kleur from 'kleur';
 import pino from 'pino';
 import { toInt } from 'radashi';
@@ -267,8 +268,14 @@ release
   .command('describe')
   .argument('<repo>', 'owner or owner/repo')
   .argument('[repo]', 'repo')
-  .option('--from <from>', 'tag of the previous release')
-  .option('--to <to>', 'tag of the current release')
+  .option('--from <from>', 'tag of a release')
+  .option('--to <to>', 'tag of a release')
+  .addOption(
+    new Option('--unreleased', 'use all unreleased PRs').conflicts([
+      'to',
+      'from',
+    ])
+  )
   .addOption(
     new Option('--persona <persona>', 'persona').choices([
       'marketing',
@@ -287,9 +294,9 @@ release
       'all',
     ] as const)
   )
-  .description('describe a release')
+  .description('describe a release (if no tags are provided, all PRs are used)')
   .action(async (first, second, options) => {
-    const { from, to } = options;
+    const { from, to, unreleased } = options;
     const { owner, repo } = parseRepoArgs(first, second);
 
     const {
@@ -320,20 +327,34 @@ release
           labels: includeSet.has('labels'),
         };
 
-    const result = await relgen.remote.release.describe(
-      {
-        owner,
-        repo,
-        fromTag: from,
-        toTag: to,
-      },
-      {
-        include,
-        persona,
-        template,
-        prompt,
-      }
-    );
+    const result = unreleased
+      ? await relgen.remote.release.describe(
+          {
+            owner,
+            repo,
+            unreleased,
+          },
+          {
+            include,
+            persona,
+            template,
+            prompt,
+          }
+        )
+      : await relgen.remote.release.describe(
+          {
+            owner,
+            repo,
+            fromTag: from,
+            toTag: to,
+          },
+          {
+            include,
+            persona,
+            template,
+            prompt,
+          }
+        );
 
     if (result) {
       log(result.description);
@@ -346,23 +367,48 @@ release
   .command('ascribe')
   .argument('<repo>', 'owner or owner/repo')
   .argument('[repo]', 'repo')
-  .option('--to <to>', 'tag of the current release')
-  .option('--from <from>', 'tag of the previous release')
-  .option('--excluded-pattern <pattern>', 'regex pattern to exclude PRs')
-  .description('')
+  .option('--to <to>', 'tag of a release')
+  .option('--from <from>', 'tag of a release')
+  .addOption(
+    new Option('--unreleased', 'use all unreleased PRs').conflicts([
+      'to',
+      'from',
+    ])
+  )
+  .option(
+    '--excluded-pattern <pattern>',
+    'regex pattern to exclude PRs',
+    (val) => new RegExp(val)
+  )
+  .description(
+    'ascribe PRs to authors in a release (if no tags are provided, all PRs are used)'
+  )
   .action(async (first, second, options) => {
-    const { from, to, excludedPattern } = options;
+    const { from, to, unreleased, excludedPattern } = options;
     const { owner, repo } = parseRepoArgs(first, second);
 
-    const result = await relgen.remote.release.ascribe({
-      owner,
-      repo,
-      fromTag: from,
-      toTag: to,
-      excludedPattern: excludedPattern
-        ? new RegExp(excludedPattern)
-        : undefined,
-    });
+    const result = unreleased
+      ? await relgen.remote.release.ascribe(
+          {
+            owner,
+            repo,
+            unreleased,
+          },
+          {
+            excludedPattern,
+          }
+        )
+      : await relgen.remote.release.ascribe(
+          {
+            owner,
+            repo,
+            fromTag: from,
+            toTag: to,
+          },
+          {
+            excludedPattern,
+          }
+        );
 
     if (result) {
       for (const { author, items } of result) {
@@ -435,6 +481,55 @@ pr.command('describe')
       log(result.complexity);
     } else {
       log(kleur.red('No description was generated'));
+    }
+  });
+
+pr.command('ascribe')
+  .argument('<owner>', 'owner or owner/repo')
+  .argument('[repo]', 'repo')
+  .option('--range <range>', 'a natural language time range (uses chrono-node)')
+  .option(
+    '--excluded-pattern <pattern>',
+    'regex pattern to exclude PRs',
+    (val) => new RegExp(val)
+  )
+  .action(async (first, second, options) => {
+    const { owner, repo } = parseRepoArgs(first, second);
+
+    let from: Date | undefined, to: Date | undefined;
+    const { excludedPattern, range } = options;
+
+    if (range) {
+      const parsed = chrono.parse(range);
+
+      if (parsed[0]) {
+        from = parsed[0].start.date();
+        to = parsed[0].end?.date();
+      }
+    }
+
+    const result = await relgen.remote.pr.ascribe(
+      {
+        owner,
+        repo,
+        from,
+        to,
+      },
+      {
+        excludedPattern,
+      }
+    );
+
+    if (result) {
+      for (const { author, items } of result) {
+        log(`## ${author}`);
+        for (const item of items) {
+          log(`- ${item.pr.title}: ${item.pr.url}`);
+          log(`  ${item.relgen.complexity}`);
+        }
+      }
+    } else {
+      log(kleur.red('No changes found'));
     }
   });
 
