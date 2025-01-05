@@ -60,7 +60,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be used in marketing materials.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
-            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+            ${options?.template ? `Follow the following template in your response as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -70,7 +70,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be used in a product update.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
-            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+            ${options?.template ? `Follow the following template in your response as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -80,7 +80,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be shown to company leadership.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
-            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+            ${options?.template ? `Follow the following template in your response as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -90,7 +90,7 @@ export const languageModelService = (
             Use the given context to generate release notes that will be shown on the repository releases page.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
-            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+            ${options?.template ? `Follow the following template in your response as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -157,7 +157,7 @@ export const languageModelService = (
         Complexity is "trivial" if it touches only a few lines of code or configuration.
         Complexity is "minor" if it touches a few functions across one or two files.
         Complexity is "major" if it's a significant refactor or adds a huge new feature (hundreds of lines of code).
-        ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+        ${options?.template ? `Follow the following template in your PR description as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
         `;
 
         const prompt = dedent`
