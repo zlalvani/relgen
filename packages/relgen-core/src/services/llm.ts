@@ -10,6 +10,7 @@ import type {
   IssueContext,
   LabelContext,
   PullRequestContext,
+  PullRequestFileContext,
   TicketContext,
 } from '../contexts';
 
@@ -143,7 +144,7 @@ export const languageModelService = (
         context: {
           change: {
             pr: PullRequestContext;
-            diff: DiffContext;
+            files: PullRequestFileContext[];
           };
           ticket?: TicketContext;
         },
@@ -156,20 +157,21 @@ export const languageModelService = (
         You are an expert software engineer tasked with summarizing a pull request.
         Use the given context to generate a summary that will be added as a comment.
         Keep your output concise and relevant.
-        If provided, follow the template as closely as possible.
+        If provided, follow the template AS CLOSELY AS POSSIBLE.
         Use proper English grammar and punctuation like a native speaker.
         DO NOT RETURN A DESCRIPTION if you lack enough context.
         DO NOT RETURN A DESCRIPTION if the description is already good.
-        Complexity is "trivial" if it touches only one line of code or configuration.
-        Complexity is "minor" if it touches several lines of code in a handful of files.
-        Complexity is "major" if it's a significant refactor or adds a huge new feature (dozens of lines of code).
+        Complexity is "trivial" if it touches only a few lines of code or configuration.
+        Complexity is "minor" if it touches a few functions across one or two files.
+        Complexity is "major" if it's a significant refactor or adds a huge new feature (hundreds of lines of code).
         `;
 
         const prompt = dedent`
           Here's the relevant context:
           ${context.change.pr.prompt}
-          ${context.change.diff.prompt}
-
+          <files>
+          ${context.change.files.map((file) => file.prompt).join('\n')}
+          </files>
           ${
             options?.template
               ? dedent`
