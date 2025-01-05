@@ -233,11 +233,16 @@ remote
     'regex pattern to exclude PRs',
     (val) => new RegExp(val)
   )
+  .option(
+    '--excluded-contexts <excluded-contexts>',
+    'which contexts to exclude, for smaller context windows (file-content)',
+    (val) => z.array(z.enum(['file-content'])).parse(val.split(','))
+  )
   .action(async (first, second, options) => {
     const { owner, repo } = parseRepoArgs(first, second);
 
     let from: Date | undefined, to: Date | undefined;
-    const { excludedPattern, range } = options;
+    const { excludedPattern, range, excludedContexts } = options;
 
     if (range) {
       const parsed = chrono.parse(range);
@@ -257,6 +262,7 @@ remote
       },
       {
         excludedPattern,
+        excludedContexts,
       }
     );
 
@@ -442,11 +448,16 @@ release
     'regex pattern to exclude PRs',
     (val) => new RegExp(val)
   )
+  .option(
+    '--excluded-contexts <excluded-contexts>',
+    'which contexts to exclude, for smaller context windows (file-content)',
+    (val) => z.array(z.enum(['file-content'])).parse(val.split(','))
+  )
   .description(
     'ascribe PRs to authors in a release (if no tags are provided, all PRs are used)'
   )
   .action(async (first, second, options) => {
-    const { from, to, unreleased, excludedPattern } = options;
+    const { from, to, unreleased, excludedPattern, excludedContexts } = options;
     const { owner, repo } = parseRepoArgs(first, second);
 
     const result = unreleased
@@ -458,6 +469,7 @@ release
           },
           {
             excludedPattern,
+            excludedContexts,
           }
         )
       : await relgen.remote.release.ascribe(
@@ -503,6 +515,11 @@ pr.command('describe')
     (val) =>
       z.array(z.enum(['comment', 'title', 'description'])).parse(val.split(','))
   )
+  .option(
+    '--excluded-contexts <excluded-contexts>',
+    'which contexts to exclude, for smaller context windows (comma separated list of ticket,file-content)',
+    (val) => z.array(z.enum(['ticket', 'file-content'])).parse(val.split(','))
+  )
   .option('--footer <footer>', 'footer')
   .option('--template <template>', 'template file')
   .option('--prompt <prompt>', 'prompt file')
@@ -516,6 +533,7 @@ pr.command('describe')
       template: templateFile,
       prompt: promptFile,
       footer,
+      excludedContexts,
     } = options;
 
     let template: string | undefined;
@@ -540,6 +558,7 @@ pr.command('describe')
         template,
         prompt,
         footer,
+        excludedContexts,
       }
     );
 
