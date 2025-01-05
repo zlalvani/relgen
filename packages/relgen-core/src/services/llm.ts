@@ -60,6 +60,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be used in marketing materials.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
+            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -69,6 +70,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be used in a product update.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
+            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -78,6 +80,7 @@ export const languageModelService = (
             Use the given context to generate a summary that will be shown to company leadership.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
+            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -87,6 +90,7 @@ export const languageModelService = (
             Use the given context to generate release notes that will be shown on the repository releases page.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
+            ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
             `;
             break;
           }
@@ -105,16 +109,6 @@ export const languageModelService = (
             `
           )
           .join('\n')}
-
-        ${
-          options?.template
-            ? dedent`
-              Here's a template to use for your response:
-              <template>
-              ${options.template}
-              </template>`
-            : ''
-        }
 
         ${
           options?.prompt
@@ -157,13 +151,13 @@ export const languageModelService = (
         You are an expert software engineer tasked with summarizing a pull request.
         Use the given context to generate a summary that will be added as a comment.
         Keep your output concise and relevant.
-        If provided, follow the template AS CLOSELY AS POSSIBLE.
         Use proper English grammar and punctuation like a native speaker.
         DO NOT RETURN A DESCRIPTION if you lack enough context.
         DO NOT RETURN A DESCRIPTION if the description is already good.
         Complexity is "trivial" if it touches only a few lines of code or configuration.
         Complexity is "minor" if it touches a few functions across one or two files.
         Complexity is "major" if it's a significant refactor or adds a huge new feature (hundreds of lines of code).
+        ${options?.template ? `Follow the following template as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
         `;
 
         const prompt = dedent`
@@ -172,15 +166,6 @@ export const languageModelService = (
           <files>
           ${context.change.files.map((file) => file.prompt).join('\n')}
           </files>
-          ${
-            options?.template
-              ? dedent`
-              Here's a template to use for your response:
-              <template>
-              ${options.template}
-              </template>`
-              : ''
-          }
 
           ${
             options?.prompt
