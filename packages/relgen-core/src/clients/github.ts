@@ -53,6 +53,17 @@ const success = <T>(
 export const githubClient = (octo: Octokit) => {
   return {
     $rest: octo.rest as Octokit['rest'],
+    http: {
+      getRawContent: async (url: string) => {
+        const result = await fetch(url, { redirect: 'follow' });
+
+        if (!result.ok) {
+          throw new Error(`Failed to fetch ${url}`);
+        }
+
+        return await result.text();
+      },
+    },
     rest: {
       users: {
         getAuthenticated: async () => {

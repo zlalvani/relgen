@@ -306,6 +306,7 @@ const relgen = ({
     owner,
     repo,
     prs,
+    includeFileContent,
   }: {
     owner: string;
     repo: string;
@@ -316,6 +317,7 @@ const relgen = ({
         | typeof getTimerangePrs
       >
     >;
+    includeFileContent?: boolean;
   }) => {
     const comments = await github.graphql.repo.pull.batchPullRequestComments({
       owner,
@@ -346,11 +348,6 @@ const relgen = ({
           metadata:
             getPullRequestRelgenMetadata(relgenComment) ??
             (await (async () => {
-              const diff = await github.rest.pulls.diff({
-                owner,
-                repo,
-                num: pr.number,
-              });
               const result = await llm.pr.describe({
                 change: {
                   pr: makeContext({
@@ -364,35 +361,31 @@ const relgen = ({
                       </pr>
                       `,
                   }),
-                  diff: makeContext({
-                    source: 'github',
-                    type: 'diff',
-                    data: diff,
-                    prompt: dedent`
-                      <diff>
-                        <raw>
-                        ${serializeToGitHubDiff(
-                          diff.data.files
-                            .filter((file) => !file.isBinary)
-                            .map((file) => {
-                              return {
-                                ...file,
-                                oldName: file.oldPath.split('/').pop(),
-                                newName: file.newPath.split('/').pop(),
-                              };
-                            })
-                            .filter(
-                              (file) =>
-                                file.oldName &&
-                                file.newName &&
-                                !excludedFiles.has(file.oldName) &&
-                                !excludedFiles.has(file.newName)
-                            )
-                        )}
-                        </raw>
-                      </diff>
-                      `,
-                  }),
+                  files: await parallel(
+                    3,
+                    (
+                      await github.$rest.pulls.listFiles({
+                        owner,
+                        repo,
+                        pull_number: pr.number,
+                      })
+                    ).data,
+                    async (file) => {
+                      return makeContext({
+                        source: 'github',
+                        type: 'pr-file',
+                        data: file,
+                        prompt: dedent`
+                        <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                          ${includeFileContent ? `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>` : ''}
+                          <patch>
+                          ${file.patch}
+                          </patch>
+                        </file>
+                        `,
+                      });
+                    }
+                  ),
                 },
               });
 
@@ -433,6 +426,7 @@ const relgen = ({
         },
         options?: {
           excludedPattern?: RegExp;
+          excludedContexts?: 'file-content'[];
         }
       ) => {
         const { owner, repo, from, to } = args;
@@ -446,6 +440,8 @@ const relgen = ({
           owner,
           repo,
           prs,
+          includeFileContent:
+            !options?.excludedContexts?.includes('file-content'),
         });
       },
       release: {
@@ -464,6 +460,7 @@ const relgen = ({
           >,
           options?: {
             excludedPattern?: RegExp;
+            excludedContexts?: 'file-content'[];
           }
         ) => {
           const { owner, repo, toTag, fromTag, unreleased } = args;
@@ -491,6 +488,8 @@ const relgen = ({
             owner,
             repo,
             prs: selectedPrs,
+            includeFileContent:
+              !options?.excludedContexts?.includes('file-content'),
           });
         },
         describe: async (
@@ -614,6 +613,7 @@ const relgen = ({
             template?: string;
             prompt?: string;
             footer?: string;
+            excludedContexts?: ('ticket' | 'file-content')[];
           }
         ) => {
           const { owner, repo, num } = args;
@@ -624,18 +624,36 @@ const relgen = ({
             ? new Set(options.write)
             : undefined;
 
-          const [pr, diff] = await Promise.all([
+          const excludedContexts = new Set(options?.excludedContexts ?? []);
+
+          const [pr, files] = await Promise.all([
             github.$rest.pulls.get({
               owner,
               repo,
               pull_number: num,
             }),
-            github.rest.pulls.diff({
+            github.$rest.pulls.listFiles({
               owner,
               repo,
-              num,
+              pull_number: num,
             }),
           ]);
+
+          const fileContexts = await parallel(3, files.data, async (file) => {
+            return makeContext({
+              source: 'github',
+              type: 'pr-file',
+              data: file,
+              prompt: dedent`
+              <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                ${excludedContexts.has('file-content') ? '' : `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>`}
+                <patch>
+                ${file.patch}
+                </patch>
+              </file>
+              `,
+            });
+          });
 
           const prContext = makeContext({
             source: 'github',
@@ -648,41 +666,11 @@ const relgen = ({
             </pr>`,
           });
 
-          const diffContext = makeContext({
-            source: 'github',
-            type: 'diff',
-            data: diff,
-            prompt: dedent`
-            <diff>
-              <raw>
-              ${serializeToGitHubDiff(
-                diff.data.files
-                  .filter((file) => !file.isBinary)
-                  .map((file) => {
-                    return {
-                      ...file,
-                      oldName: file.oldPath.split('/').pop(),
-                      newName: file.newPath.split('/').pop(),
-                    };
-                  })
-                  .filter(
-                    (file) =>
-                      file.oldName &&
-                      file.newName &&
-                      !excludedFiles.has(file.oldName) &&
-                      !excludedFiles.has(file.newName)
-                  )
-              )}
-              </raw>
-            </diff>,
-            `,
-          });
-
           const result = await llm.pr.describe(
             {
               change: {
                 pr: prContext,
-                diff: diffContext,
+                files: fileContexts,
               },
             },
             {
