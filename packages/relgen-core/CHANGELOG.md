@@ -1,5 +1,12 @@
 # @relgen/core
 
+## 0.0.10
+
+### Patch Changes
+
+- 431f1e1: added the entirety of changed files in a PR to the context in pr describe
+- 444c5b7: moved templates to the system prompt
+
 ## 0.0.9
 
 ### Patch Changes
