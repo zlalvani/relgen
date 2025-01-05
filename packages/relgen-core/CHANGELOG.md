@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.11
+
+### Patch Changes
+
+- a2e2117: fixed ambiguous template prompt
+
 ## 0.0.10
 
 ### Patch Changes

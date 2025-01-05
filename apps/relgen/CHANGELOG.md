@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.15
+
+### Patch Changes
+
+- c114d22: support excluded-contexts for remote pr describe, remote release ascribe, remote ascribe
+- Updated dependencies [a2e2117]
+  - @relgen/core@0.0.11
+
 ## 0.0.14
 
 ### Patch Changes
