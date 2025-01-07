@@ -1,5 +1,12 @@
 # relgen
 
+## 0.0.16
+
+### Patch Changes
+
+- Updated dependencies [52876de]
+  - @relgen/core@0.0.12
+
 ## 0.0.15
 
 ### Patch Changes

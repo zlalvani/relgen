@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.12
+
+### Patch Changes
+
+- 52876de: pr describe now uses a default template
+
 ## 0.0.11
 
 ### Patch Changes
