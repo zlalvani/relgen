@@ -18,10 +18,10 @@ export const PullRequestDescribeSchema = z.object({
   title: z
     .string()
     .describe('Your new PR title. Do not change it if it is already good.'),
-  description: z.string().optional().describe('Your new PR description'),
   complexity: z
     .enum(['trivial', 'minor', 'major'])
     .describe('Your estimate of the complexity of the PR'),
+  description: z.string().optional().describe('Your new PR description'),
 });
 
 export type PullRequestDescribe = z.infer<typeof PullRequestDescribeSchema>;
@@ -147,6 +147,24 @@ export const languageModelService = (
           prompt?: string;
         }
       ) => {
+        const template =
+          options?.template ??
+          dedent`
+        ### Changes
+        A bullet point list of the important changes, one sentence each
+
+        ### Implementation
+        ONLY INCLUDED IF THE CHANGES ARE "major" COMPLEXITY.
+        If the changes are "major" complexity, use this section to explain the context and approach at a high level in a few sentences. If they are not "major", omit this section.
+
+        ### Other Notes
+        ONLY INCLUDED IF THERE ARE CHANGES UNRELATED TO ANYTHING DESCRIBED ABOVE.
+        If there are small tweaks to things unrelated to the main purpose of the PR, highlight them here in a bullet point list.
+        If there are no small tweaks, omit this section.
+        One sentence each.
+        Do not repeat yourself in this section; if a change is mentioned in the "Changes" section, it does not need to be mentioned here.
+        `;
+
         const system = dedent`
         You are an expert software engineer tasked with summarizing a pull request.
         Use the given context to generate a summary that will be added as a comment.
@@ -157,7 +175,7 @@ export const languageModelService = (
         Complexity is "trivial" if it touches only a few lines of code or configuration.
         Complexity is "minor" if it touches a few functions across one or two files.
         Complexity is "major" if it's a significant refactor or adds a huge new feature (hundreds of lines of code).
-        ${options?.template ? `Follow the following template in your PR description as closely as possible:\n<template>\n${options.template}\n</template>` : ''}
+        Follow the following template in your PR description as closely as possible:\n<template>\n${template}\n</template>
         `;
 
         const prompt = dedent`
