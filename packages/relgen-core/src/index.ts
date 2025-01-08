@@ -7,13 +7,14 @@ import pino from 'pino';
 import { group, parallel, unique } from 'radashi';
 import type { MergeExclusive } from 'type-fest';
 import { type GithubClient, createGithubClient } from './clients/github';
-import { makeContext } from './contexts';
+import { makeContext } from './services/context';
 import {
   type LanguageModelService,
   type PullRequestDescribe,
   PullRequestDescribeSchema,
   createLanguageModelService,
 } from './services/llm';
+import { type RemoteService, createRemoteService } from './services/remote';
 
 export type RelgenOptions = {
   llm:
@@ -174,12 +175,14 @@ const relgen = ({
   };
   deps: {
     llm: LanguageModelService;
+    remote: RemoteService;
     github: GithubClient;
     logger: pino.Logger;
     linear?: LinearClient;
   };
 }) => {
-  const { llm, github, logger } = deps;
+  const { llm, github, logger, remote } = deps;
+  // const { remoteContext, remoteWrite } = deps.remote;
 
   const getUnreleasedPrs = async ({
     owner,
@@ -351,7 +354,6 @@ const relgen = ({
               const result = await llm.pr.describe({
                 change: {
                   pr: makeContext({
-                    source: 'github',
                     type: 'pr',
                     data: pr,
                     prompt: dedent`
@@ -372,7 +374,6 @@ const relgen = ({
                     ).data,
                     async (file) => {
                       return makeContext({
-                        source: 'github',
                         type: 'pr-file',
                         data: file,
                         prompt: dedent`
@@ -560,7 +561,6 @@ const relgen = ({
             // TODO: include labels for the issues and comments for both
             return {
               pr: makeContext({
-                source: 'github',
                 type: 'pr',
                 data: pr,
                 prompt: dedent`
@@ -573,7 +573,6 @@ const relgen = ({
               }),
               issue: issue
                 ? makeContext({
-                    source: 'github',
                     type: 'issue',
                     data: issue,
                     prompt: dedent`
@@ -641,7 +640,6 @@ const relgen = ({
 
           const fileContexts = await parallel(3, files.data, async (file) => {
             return makeContext({
-              source: 'github',
               type: 'pr-file',
               data: file,
               prompt: dedent`
@@ -656,7 +654,6 @@ const relgen = ({
           });
 
           const prContext = makeContext({
-            source: 'github',
             type: 'pr',
             data: pr,
             prompt: dedent`
@@ -775,7 +772,6 @@ const relgen = ({
           ]);
 
           const prContext = makeContext({
-            source: 'github',
             type: 'pr',
             data: pr,
             prompt: dedent`
@@ -794,7 +790,6 @@ const relgen = ({
             .filter((label) => !exclude.has(label.name))
             .map((label) => {
               return makeContext({
-                source: 'github',
                 type: 'label',
                 data: label,
                 prompt: dedent`
@@ -808,7 +803,6 @@ const relgen = ({
 
           const existingLabels = pr.data.labels.map((label) => {
             return makeContext({
-              source: 'github',
               type: 'label',
               data: label,
               prompt: dedent`
@@ -825,7 +819,6 @@ const relgen = ({
           });
 
           const diffContext = makeContext({
-            source: 'github',
             type: 'diff',
             data: diff,
             prompt: dedent`
@@ -900,72 +893,26 @@ const relgen = ({
           const { owner, repo, num } = args;
 
           const [labels, issue] = await Promise.all([
-            github.$rest.issues.listLabelsForRepo({
+            remote.context.labels.get({
               owner,
               repo,
+              exclude: new Set(
+                Array.isArray(options?.exclude) ? options.exclude : []
+              ),
             }),
-            github.$rest.issues.get({
+            remote.context.issue.get({
               owner,
               repo,
-              issue_number: num,
+              num,
             }),
           ]);
 
-          const issueContext = makeContext({
-            source: 'github',
-            type: 'issue',
-            data: issue,
-            prompt: dedent`
-            <issue>
-              <title>${issue.data.title}</title>
-              <body>${issue.data.body}</body>
-            </issue>
-            `,
-          });
-
-          const exclude = new Set(
-            Array.isArray(options?.exclude) ? options.exclude : []
-          );
-
-          const labelContexts = labels.data
-            .filter((label) => !exclude.has(label.name))
-            .map((label) => {
-              return makeContext({
-                source: 'github',
-                type: 'label',
-                data: label,
-                prompt: dedent`
-                <label>
-                  <name>${label.name}</name>
-                  <description>${label.description}</description>
-                </label>
-              `,
-              });
-            });
-
-          const existingLabels = issue.data.labels.map((label) => {
-            return makeContext({
-              source: 'github',
-              type: 'label',
-              data: label,
-              prompt: dedent`
-              <label>
-              ${
-                typeof label === 'string'
-                  ? `<name>${label}</name>`
-                  : `<name>${label.name}</name>`
-              }
-              </label>
-            `,
-            });
-          });
-
           const result = await llm.issue.label(
             {
-              issue: issueContext,
-              labels: labelContexts,
+              issue: issue.issue,
+              labels,
               existing:
-                options?.exclude === 'existing' ? undefined : existingLabels,
+                options?.exclude === 'existing' ? undefined : issue.labels,
             },
             {
               prompt: options?.prompt,
@@ -973,14 +920,13 @@ const relgen = ({
           );
 
           if (options?.write) {
-            await github.$rest.issues.update({
+            await remote.write.issue.write({
               owner,
               repo,
-              issue_number: num,
-              labels:
-                options.write === 'set'
-                  ? result.object.labels
-                  : unique([...issue.data.labels, ...result.object.labels]),
+              num,
+              context: issue.issue,
+              generated: result,
+              mode: options.write,
             });
           }
 
@@ -1006,6 +952,8 @@ export const createRelgen = (options: RelgenOptions) => {
 
   logger = logger ?? pino();
 
+  const github = createGithubClient({ token: integrations.github.token });
+
   return relgen({
     args: {
       write: {
@@ -1016,7 +964,16 @@ export const createRelgen = (options: RelgenOptions) => {
     },
     deps: {
       logger: logger,
-      github: createGithubClient({ token: integrations.github.token }),
+      github,
+      remote: createRemoteService({
+        github,
+      }),
+      // remoteContext: createRemoteContextService({
+      //   github,
+      // }),
+      // remoteWrite: createRemoteWriteService({
+      //   github,
+      // }),
       llm: createLanguageModelService(llm, logger),
       linear:
         integrations.linear &&

@@ -12,7 +12,7 @@ import type {
   PullRequestContext,
   PullRequestFileContext,
   TicketContext,
-} from '../contexts';
+} from '../services/context';
 
 export const PullRequestDescribeSchema = z.object({
   title: z
@@ -365,3 +365,6 @@ export const createLanguageModelService = (
 };
 
 export type LanguageModelService = ReturnType<typeof languageModelService>;
+export type GeneratedIssueLabel = Awaited<
+  ReturnType<LanguageModelService['issue']['label']>
+>;
