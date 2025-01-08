@@ -18,6 +18,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.5",
     "@ai-sdk/openai": "^1.0.8",
+    "@gitbeaker/rest": "^42.0.2",
     "@linear/sdk": "^35.0.0",
     "@octokit/types": "^13.6.2",
     "ai": "^4.0.18",
