@@ -371,3 +371,6 @@ export type GeneratedIssueLabel = Awaited<
 export type GeneratedPullRequestLabel = Awaited<
   ReturnType<LanguageModelService['pr']['label']>
 >;
+export type GeneratedGithubPullRequest = Awaited<
+  ReturnType<LanguageModelService['pr']['describe']>
+>;

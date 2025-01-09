@@ -3,6 +3,7 @@ import type {
   IssueContext,
   LabelContext,
   PullRequestContext,
+  PullRequestFileContext,
 } from '..';
 
 export type RemoteContextService = {
@@ -21,9 +22,13 @@ export type RemoteContextService = {
       pr: PullRequestContext;
       labels: LabelContext[];
     }>;
-    file: {
-      get: () => void;
-    };
+    files: (args: {
+      owner: string;
+      repo: string;
+      num: number;
+      excludedFiles?: Set<string>;
+      excludedContexts?: Set<'ticket' | 'file-content'>;
+    }) => Promise<PullRequestFileContext[]>;
   };
   issue: {
     get: (args: {

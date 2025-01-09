@@ -625,48 +625,25 @@ const relgen = ({
           const excludedContexts = new Set(options?.excludedContexts ?? []);
 
           const [pr, files] = await Promise.all([
-            github.$rest.pulls.get({
+            remote.context.pr.get({
               owner,
               repo,
-              pull_number: num,
+              num,
             }),
-            github.$rest.pulls.listFiles({
+            remote.context.pr.files({
               owner,
               repo,
-              pull_number: num,
+              num,
+              excludedContexts,
+              excludedFiles,
             }),
           ]);
-
-          const fileContexts = await parallel(3, files.data, async (file) => {
-            return makeContext({
-              type: 'pr-file',
-              data: file,
-              prompt: dedent`
-              <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
-                ${excludedContexts.has('file-content') ? '' : `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>`}
-                <patch>
-                ${file.patch}
-                </patch>
-              </file>
-              `,
-            });
-          });
-
-          const prContext = makeContext({
-            type: 'pr',
-            data: pr,
-            prompt: dedent`
-            <pr>
-              <title>${pr.data.title}</title>
-              <body>${pr.data.body}</body>  
-            </pr>`,
-          });
 
           const result = await llm.pr.describe(
             {
               change: {
-                pr: prContext,
-                files: fileContexts,
+                pr: pr.pr,
+                files,
               },
             },
             {
@@ -689,52 +666,21 @@ const relgen = ({
             selectedWrites?.has('description') ||
             selectedWrites?.has('title')
           ) {
-            await github.$rest.pulls.update({
-              owner,
-              repo,
-              pull_number: num,
+            await remote.write.pr.update({
+              context: pr.pr,
               title: selectedWrites?.has('title')
                 ? result.object.title
                 : undefined,
-              body: selectedWrites?.has('description') ? body : undefined,
+              taggedBody: selectedWrites?.has('description') ? body : undefined,
             });
           }
 
           if (selectedWrites?.has('comment') && body) {
-            const comments = await github.$rest.issues.listComments({
-              owner,
-              repo,
-              issue_number: num,
+            await remote.write.pr.comment({
+              context: pr.pr,
+              taggedBody: body,
+              tag: RELGEN_TAG,
             });
-
-            const username = (await github.rest.users.getAuthenticated())?.data
-              .login;
-
-            logger.debug({
-              username,
-            });
-
-            const existingComment = comments.data.find(
-              (comment) =>
-                comment.body?.includes(RELGEN_TAG) &&
-                (!username || comment.user?.login === username)
-            );
-
-            if (existingComment) {
-              await github.$rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existingComment.id,
-                body,
-              });
-            } else {
-              await github.$rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: num,
-                body,
-              });
-            }
           }
 
           return result.object;
@@ -788,7 +734,7 @@ const relgen = ({
           );
 
           if (options?.write) {
-            await remote.write.pr.write({
+            await remote.write.pr.label({
               context: pr.pr,
               generated: result,
               mode: options.write,
@@ -841,7 +787,7 @@ const relgen = ({
           );
 
           if (options?.write) {
-            await remote.write.issue.write({
+            await remote.write.issue.label({
               context: issue.issue,
               generated: result,
               mode: options.write,
@@ -883,9 +829,12 @@ export const createRelgen = (options: RelgenOptions) => {
     deps: {
       logger: logger,
       github,
-      remote: createRemoteService({
-        github,
-      }),
+      remote: createRemoteService(
+        {
+          github,
+        },
+        logger
+      ),
       llm: createLanguageModelService(llm, logger),
       linear:
         integrations.linear &&

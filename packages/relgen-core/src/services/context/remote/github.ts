@@ -1,5 +1,5 @@
 import type { File } from 'gitdiff-parser';
-import { dedent } from 'radashi';
+import { dedent, parallel } from 'radashi';
 import type { GithubClient } from '../../../clients/github';
 import { makeContext } from '../../context';
 import type { RemoteContextService } from './types';
@@ -181,8 +181,45 @@ export const githubContextService = (github: GithubClient) => {
           }),
         };
       },
-      file: {
-        get: async () => {},
+      files: async ({
+        owner,
+        repo,
+        num,
+        excludedFiles,
+        excludedContexts,
+      }: {
+        owner: string;
+        repo: string;
+        num: number;
+        excludedFiles?: Set<string>;
+        excludedContexts?: Set<'ticket' | 'file-content'>;
+      }) => {
+        const files = await github.$rest.pulls.listFiles({
+          owner,
+          repo,
+          pull_number: num,
+        });
+
+        return await parallel(
+          3,
+          files.data.filter(
+            (file) => !excludedFiles || !excludedFiles.has(file.filename)
+          ),
+          async (file) => {
+            return makeContext({
+              type: 'pr-file',
+              data: file,
+              prompt: dedent`
+              <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                ${excludedContexts?.has('file-content') ? '' : `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>`}
+                <patch>
+                ${file.patch}
+                </patch>
+              </file>
+              `,
+            });
+          }
+        );
       },
     },
     issue: {
