@@ -1,36 +1,57 @@
 import { unique } from 'radashi';
 import type { GithubClient } from '../../../clients/github';
-import type { GithubIssueContext } from '../../context/remote/github';
-import type { GeneratedIssueLabel } from '../../llm';
+import type {
+  GithubIssueContext,
+  GithubPullRequestContext,
+} from '../../context/remote/github';
+import type { GeneratedIssueLabel, GeneratedPullRequestLabel } from '../../llm';
 import type { RemoteWriteService } from './types';
 
 export const githubWriteService = (github: GithubClient) => {
   return {
-    issue: {
+    pr: {
       write: async ({
-        owner,
-        repo,
-        num,
         context,
         generated,
         mode,
       }: {
-        owner: string;
-        repo: string;
-        num: number;
+        context: GithubPullRequestContext;
+        generated: GeneratedPullRequestLabel;
+        mode: 'add' | 'set';
+      }) => {
+        return await github.$rest.issues.update({
+          owner: context.data.owner,
+          repo: context.data.repo,
+          issue_number: context.data.num,
+          labels:
+            mode === 'set'
+              ? generated.object.labels
+              : unique([
+                  ...context.data.pr.data.labels,
+                  ...generated.object.labels,
+                ]),
+        });
+      },
+    },
+    issue: {
+      write: async ({
+        context,
+        generated,
+        mode,
+      }: {
         context: GithubIssueContext;
         generated: GeneratedIssueLabel;
         mode: 'add' | 'set';
       }) => {
         return await github.$rest.issues.update({
-          owner,
-          repo,
-          issue_number: num,
+          owner: context.data.owner,
+          repo: context.data.repo,
+          issue_number: context.data.num,
           labels:
             mode === 'set'
               ? generated.object.labels
               : unique([
-                  ...context.data.data.labels,
+                  ...context.data.issue.data.labels,
                   ...generated.object.labels,
                 ]),
         });

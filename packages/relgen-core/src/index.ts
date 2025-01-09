@@ -4,7 +4,7 @@ import { LinearClient } from '@linear/sdk';
 import dedent from 'dedent';
 import type { File } from 'gitdiff-parser';
 import pino from 'pino';
-import { group, parallel, unique } from 'radashi';
+import { group, parallel } from 'radashi';
 import type { MergeExclusive } from 'type-fest';
 import { type GithubClient, createGithubClient } from './clients/github';
 import { makeContext } from './services/context';
@@ -755,107 +755,33 @@ const relgen = ({
           const { owner, repo, num } = args;
 
           const [labels, pr, diff] = await Promise.all([
-            github.$rest.issues.listLabelsForRepo({
+            remote.context.labels.get({
               owner,
               repo,
+              exclude: new Set(
+                Array.isArray(options?.exclude) ? options.exclude : []
+              ),
             }),
-            github.$rest.pulls.get({
+            remote.context.pr.get({
               owner,
               repo,
-              pull_number: num,
+              num,
             }),
-            github.rest.pulls.diff({
+            remote.context.pr.diff({
               owner,
               repo,
               num,
             }),
           ]);
 
-          const prContext = makeContext({
-            type: 'pr',
-            data: pr,
-            prompt: dedent`
-            <pr>
-              <title>${pr.data.title}</title>
-              <body>${pr.data.body}</body>
-            </pr>
-            `,
-          });
-
-          const exclude = new Set(
-            Array.isArray(options?.exclude) ? options.exclude : []
-          );
-
-          const labelContexts = labels.data
-            .filter((label) => !exclude.has(label.name))
-            .map((label) => {
-              return makeContext({
-                type: 'label',
-                data: label,
-                prompt: dedent`
-                <label>
-                  <name>${label.name}</name>
-                  <description>${label.description}</description>
-                </label>
-              `,
-              });
-            });
-
-          const existingLabels = pr.data.labels.map((label) => {
-            return makeContext({
-              type: 'label',
-              data: label,
-              prompt: dedent`
-              <label>
-              ${
-                typeof label === 'string'
-                  ? `<name>${label}</name>`
-                  : dedent`
-                <name>${label.name}</name>`
-              }
-              </label>
-            `,
-            });
-          });
-
-          const diffContext = makeContext({
-            type: 'diff',
-            data: diff,
-            prompt: dedent`
-            <diff>
-              <raw>
-              ${serializeToGitHubDiff(
-                diff.data.files
-                  .filter((file) => !file.isBinary)
-                  .map((file) => {
-                    return {
-                      ...file,
-                      oldName: file.oldPath.split('/').pop(),
-                      newName: file.newPath.split('/').pop(),
-                    };
-                  })
-                  .filter(
-                    (file) =>
-                      file.oldName &&
-                      file.newName &&
-                      !excludedFiles.has(file.oldName) &&
-                      !excludedFiles.has(file.newName)
-                  )
-              )}
-              </raw>
-            </diff>
-            `,
-          });
-
           const result = await llm.pr.label(
             {
               change: {
-                pr: prContext,
-                diff: diffContext,
+                pr: pr.pr,
+                diff,
               },
-              labels: labelContexts,
-              existing:
-                options?.exclude === 'existing' ? undefined : existingLabels,
+              labels,
+              existing: options?.exclude === 'existing' ? undefined : pr.labels,
             },
             {
               prompt: options?.prompt,
@@ -863,14 +789,10 @@ const relgen = ({
           );
 
           if (options?.write) {
-            await github.$rest.issues.update({
-              owner,
-              repo,
-              issue_number: num,
-              labels:
-                options.write === 'set'
-                  ? result.object.labels
-                  : unique([...pr.data.labels, ...result.object.labels]),
+            await remote.write.pr.write({
+              context: pr.pr,
+              generated: result,
+              mode: options.write,
             });
           }
 
@@ -921,9 +843,6 @@ const relgen = ({
 
           if (options?.write) {
             await remote.write.issue.write({
-              owner,
-              repo,
-              num,
               context: issue.issue,
               generated: result,
               mode: options.write,
