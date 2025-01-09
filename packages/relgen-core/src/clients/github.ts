@@ -1,7 +1,6 @@
-import dedent from 'dedent';
 import diffparser from 'gitdiff-parser';
 import { Octokit, RequestError } from 'octokit';
-import { toInt, tryit } from 'radashi';
+import { dedent, toInt, tryit } from 'radashi';
 import { z } from 'zod';
 
 const IssueSchema = z.object({

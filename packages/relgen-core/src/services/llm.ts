@@ -1,8 +1,8 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { type LanguageModel, generateObject } from 'ai';
-import dedent from 'dedent';
 import type pino from 'pino';
+import { dedent } from 'radashi';
 import { z } from 'zod';
 import type { RelgenOptions } from '..';
 import type {
