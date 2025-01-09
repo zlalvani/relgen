@@ -13,14 +13,22 @@ export type Context<TType extends ContextType, TData> = {
   prompt: string;
 };
 
-export type PullRequestContext<TData = unknown> = Context<'pr', TData>;
-export type PullRequestFileContext<TData = unknown> = Context<'pr-file', TData>;
-export type DiffContext<TData = unknown> = Context<'diff', TData>;
+// TODO: clean up these suppressions when biome 2.0 is released
+
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type PullRequestContext<TData = any> = Context<'pr', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type PullRequestFileContext<TData = any> = Context<'pr-file', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type DiffContext<TData = any> = Context<'diff', TData>;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type IssueContext<TData = any> = Context<'issue', TData>;
-export type TicketContext<TData = unknown> = Context<'ticket', TData>;
-export type CodeContext<TData = unknown> = Context<'code', TData>;
-export type LabelContext<TData = unknown> = Context<'label', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type TicketContext<TData = any> = Context<'ticket', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type CodeContext<TData = any> = Context<'code', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type LabelContext<TData = any> = Context<'label', TData>;
 
 // Helper for initializing a context
 export const makeContext = <TType extends ContextType, TData>({

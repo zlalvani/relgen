@@ -1,12 +1,26 @@
-import type { IssueContext, LabelContext, PullRequestContext } from '..';
+import type {
+  DiffContext,
+  IssueContext,
+  LabelContext,
+  PullRequestContext,
+} from '..';
 
 export type RemoteContextService = {
   pr: {
+    diff: (args: {
+      owner: string;
+      repo: string;
+      num: number;
+      excludedFiles?: Set<string>;
+    }) => Promise<DiffContext>;
     get: (args: {
       owner: string;
       repo: string;
       num: number;
-    }) => Promise<PullRequestContext>;
+    }) => Promise<{
+      pr: PullRequestContext;
+      labels: LabelContext[];
+    }>;
     file: {
       get: () => void;
     };

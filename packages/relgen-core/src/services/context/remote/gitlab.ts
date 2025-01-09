@@ -1,10 +1,25 @@
-import { type PullRequestContext, makeContext } from '..';
+import { makeContext } from '..';
 import type { GitlabClient } from '../../../clients/gitlab';
 import type { RemoteContextService } from './types';
 
 export const gitlabContextService = (gitlab: GitlabClient) => {
   return {
     pr: {
+      diff: async ({
+        owner,
+        repo,
+        num,
+      }: {
+        owner: string;
+        repo: string;
+        num: number;
+      }) => {
+        return makeContext({
+          type: 'diff',
+          data: {},
+          prompt: '',
+        });
+      },
       get: async ({
         owner,
         repo,
@@ -14,7 +29,14 @@ export const gitlabContextService = (gitlab: GitlabClient) => {
         repo: string;
         num: number;
       }) => {
-        return {} as PullRequestContext;
+        return {
+          pr: makeContext({
+            type: 'pr',
+            data: {},
+            prompt: '',
+          }),
+          labels: [],
+        };
       },
       file: {
         get: async () => {},
@@ -60,3 +82,6 @@ export type GitlabContextService = ReturnType<typeof gitlabContextService>;
 export type GitlabIssueContext = Awaited<
   ReturnType<GitlabContextService['issue']['get']>
 >['issue'];
+export type GitlabPullRequestContext = Awaited<
+  ReturnType<GitlabContextService['pr']['get']>
+>['pr'];

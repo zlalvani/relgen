@@ -368,3 +368,6 @@ export type LanguageModelService = ReturnType<typeof languageModelService>;
 export type GeneratedIssueLabel = Awaited<
   ReturnType<LanguageModelService['issue']['label']>
 >;
+export type GeneratedPullRequestLabel = Awaited<
+  ReturnType<LanguageModelService['pr']['label']>
+>;

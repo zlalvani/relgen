@@ -1,22 +1,30 @@
 import type { GitlabClient } from '../../../clients/gitlab';
-import type { GitlabIssueContext } from '../../context/remote/gitlab';
-import type { GeneratedIssueLabel } from '../../llm';
+import type {
+  GitlabIssueContext,
+  GitlabPullRequestContext,
+} from '../../context/remote/gitlab';
+import type { GeneratedIssueLabel, GeneratedPullRequestLabel } from '../../llm';
 import type { RemoteWriteService } from './types';
 
 export const gitlabWriteService = (gitlab: GitlabClient) => {
   return {
-    issue: {
+    pr: {
       write: async ({
-        owner,
-        repo,
-        num,
         context,
         generated,
         mode,
       }: {
-        owner: string;
-        repo: string;
-        num: number;
+        context: GitlabPullRequestContext;
+        generated: GeneratedPullRequestLabel;
+        mode: 'add' | 'set';
+      }) => {},
+    },
+    issue: {
+      write: async ({
+        context,
+        generated,
+        mode,
+      }: {
         context: GitlabIssueContext;
         generated: GeneratedIssueLabel;
         mode: 'add' | 'set';
