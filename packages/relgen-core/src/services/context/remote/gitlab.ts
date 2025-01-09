@@ -38,8 +38,8 @@ export const gitlabContextService = (gitlab: GitlabClient) => {
           labels: [],
         };
       },
-      file: {
-        get: async () => {},
+      files: async () => {
+        return [];
       },
     },
     issue: {

@@ -9,7 +9,25 @@ import type { RemoteWriteService } from './types';
 export const gitlabWriteService = (gitlab: GitlabClient) => {
   return {
     pr: {
-      write: async ({
+      update: async ({
+        context,
+        title,
+        taggedBody,
+      }: {
+        context: GitlabPullRequestContext;
+        title?: string;
+        taggedBody?: string;
+      }) => {},
+      comment: async ({
+        context,
+        taggedBody,
+        tag,
+      }: {
+        context: GitlabPullRequestContext;
+        taggedBody: string;
+        tag: string;
+      }) => {},
+      label: async ({
         context,
         generated,
         mode,
@@ -20,7 +38,7 @@ export const gitlabWriteService = (gitlab: GitlabClient) => {
       }) => {},
     },
     issue: {
-      write: async ({
+      label: async ({
         context,
         generated,
         mode,

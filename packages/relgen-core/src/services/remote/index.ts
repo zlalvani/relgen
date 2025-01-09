@@ -1,3 +1,4 @@
+import type pino from 'pino';
 import type { GithubClient } from '../../clients/github';
 import type { GitlabClient } from '../../clients/gitlab';
 import { githubContextService } from '../context/remote/github';
@@ -26,12 +27,13 @@ export const createRemoteService = (
     | {
         github: GithubClient;
         gitlab?: never;
-      }
+      },
+  logger: pino.Logger
 ) => {
   if (clients.github) {
     return remoteService(
       githubContextService(clients.github),
-      githubWriteService(clients.github)
+      githubWriteService(clients.github, logger)
     );
   }
   return remoteService(
