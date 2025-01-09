@@ -5,10 +5,9 @@ import { Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
 import { type Relgen, createRelgen } from '@relgen/core';
 import * as chrono from 'chrono-node/en';
-import dedent from 'dedent';
 import kleur from 'kleur';
 import pino from 'pino';
-import { toInt } from 'radashi';
+import { dedent, toInt } from 'radashi';
 import { z } from 'zod';
 import {
   type Config,

@@ -1,5 +1,5 @@
-import dedent from 'dedent';
 import type { File } from 'gitdiff-parser';
+import { dedent } from 'radashi';
 import type { GithubClient } from '../../../clients/github';
 import { makeContext } from '../../context';
 import type { RemoteContextService } from './types';
@@ -109,7 +109,6 @@ export const githubContextService = (github: GithubClient) => {
           },
           prompt: dedent`
             <diff>
-              <raw>
               ${serializeToGitHubDiff(
                 diff.data.files
                   .filter((file) => !file.isBinary)
@@ -129,7 +128,6 @@ export const githubContextService = (github: GithubClient) => {
                           !excludedFiles.has(file.newName)))
                   )
               )}
-              </raw>
             </diff>
             `,
         });
@@ -160,7 +158,9 @@ export const githubContextService = (github: GithubClient) => {
             prompt: dedent`
           <pr>
             <title>${pr.data.title}</title>
-            <body>${pr.data.body}</body>
+            <body>
+            ${pr.data.body}
+            </body>
           </pr>
         `,
           }),

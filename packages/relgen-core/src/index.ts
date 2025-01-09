@@ -1,10 +1,9 @@
 import type { AnthropicMessagesModelId } from '@ai-sdk/anthropic/internal';
 import type { OpenAIChatModelId } from '@ai-sdk/openai/internal';
 import { LinearClient } from '@linear/sdk';
-import dedent from 'dedent';
 import type { File } from 'gitdiff-parser';
 import pino from 'pino';
-import { group, parallel } from 'radashi';
+import { dedent, group, parallel } from 'radashi';
 import type { MergeExclusive } from 'type-fest';
 import { type GithubClient, createGithubClient } from './clients/github';
 import { makeContext } from './services/context';
@@ -887,12 +886,6 @@ export const createRelgen = (options: RelgenOptions) => {
       remote: createRemoteService({
         github,
       }),
-      // remoteContext: createRemoteContextService({
-      //   github,
-      // }),
-      // remoteWrite: createRemoteWriteService({
-      //   github,
-      // }),
       llm: createLanguageModelService(llm, logger),
       linear:
         integrations.linear &&
