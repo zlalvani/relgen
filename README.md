@@ -30,6 +30,9 @@ yarn global add relgen
 # Generate release notes
 relgen remote release describe owner/repo
 
+# Analyze contributions in a release
+relgen remote release ascribe owner/repo --from v1.0.0 --to v1.1.0
+
 # Generate PR description
 relgen remote pr describe owner/repo 123
 
@@ -38,6 +41,9 @@ relgen remote pr label owner/repo 456
 
 # Auto-label an issue
 relgen remote issue label owner/repo 789
+
+# Analyze repository contributions
+relgen remote ascribe owner/repo --range "last month"
 
 # Use different LLM providers
 relgen remote release describe owner/repo --provider anthropic
