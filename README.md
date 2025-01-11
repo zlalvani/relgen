@@ -4,10 +4,13 @@ AI-powered tool for GitHub repositories that automatically generates release not
 
 ## Features
 
-- 🤖 AI-powered content generation for:
-  - Release notes
-  - Pull request descriptions
-  - Issue labeling and categorization
+- 🤖 AI-powered content generation:
+  - Release notes with customizable perspectives (marketing, engineering, product, leadership)
+  - Smart PR descriptions with complexity analysis
+  - Automated issue and PR labeling
+  - Contribution attribution and analysis
+  - Repository activity insights
+  - Release-specific contribution tracking
 - 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
