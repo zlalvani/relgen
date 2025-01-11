@@ -12,7 +12,7 @@ AI-powered tool for GitHub repositories that automatically generates release not
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
 - 🛠️ Customizable templates and prompts
-- 📦 Modular architecture with TypeScript
+- 📦 Scriptable with bash or typescript (via @relgen/core)
 
 ## Installation
 
