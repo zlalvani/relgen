@@ -1,6 +1,6 @@
 # Relgen 📝
 
-AI-powered Git analysis tool that turns repository activity into meaningful release notes, PR descriptions, and contribution insights.
+AI-powered Git analysis tool that turns repository activity into meaningful release notes, PR descriptions, contribution insights, and automatic issue/PR labels.
 
 ## Features
 
