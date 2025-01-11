@@ -26,8 +26,6 @@ yarn global add relgen
 
 ## CLI Usage
 
-Relgen provides a CLI tool for easy access to its features:
-
 ```bash
 # Generate release notes
 relgen remote release describe owner/repo
@@ -42,7 +40,7 @@ relgen remote pr label owner/repo 456
 relgen remote issue label owner/repo 789
 
 # Use different LLM providers
-relgen remote release describe owner/repo --llm.provider anthropic
+relgen remote release describe owner/repo --provider anthropic
 
 # Write results back to GitHub
 relgen remote pr describe owner/repo 123 --write pr
@@ -54,9 +52,6 @@ relgen remote pr describe owner/repo 123 --prompt custom-prompt.txt
 
 # Get help
 relgen --help
-relgen release describe --help
-relgen pr describe --help
-relgen issue label --help
 ```
 
 ## Github Action
