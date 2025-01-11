@@ -1,7 +1,6 @@
 import type { AnthropicMessagesModelId } from '@ai-sdk/anthropic/internal';
 import type { OpenAIChatModelId } from '@ai-sdk/openai/internal';
 import { LinearClient } from '@linear/sdk';
-import type { File } from 'gitdiff-parser';
 import pino from 'pino';
 import { dedent, group, parallel } from 'radashi';
 import type { MergeExclusive } from 'type-fest';
@@ -86,81 +85,6 @@ function getPullRequestRelgenMetadata(body?: string) {
   return parsed.data;
 }
 
-// ChatGPT generated - serialize a list of files to a GitHub diff
-function serializeToGitHubDiff(files: File[]): string {
-  return files
-    .map((file) => {
-      const oldPath = file.oldPath;
-      const newPath = file.newPath;
-      const oldMode = file.oldMode;
-      const newMode = file.newMode;
-      const oldRevision = file.oldRevision;
-      const newRevision = file.newRevision;
-
-      const lines: string[] = [];
-      lines.push(`diff --git a/${oldPath} b/${newPath}`);
-
-      // If file is renamed or copied, show similarity index, rename/copy from/to lines
-      if (file.type === 'rename' || file.type === 'copy') {
-        const similarity = file.similarity || 100;
-        lines.push(`similarity index ${similarity}%`);
-        if (file.type === 'rename') {
-          lines.push(`rename from ${oldPath}`);
-          lines.push(`rename to ${newPath}`);
-        } else if (file.type === 'copy') {
-          lines.push(`copy from ${oldPath}`);
-          lines.push(`copy to ${newPath}`);
-        }
-      }
-
-      // If mode changed
-      if (oldMode && newMode && oldMode !== newMode) {
-        lines.push(`old mode ${oldMode}`);
-        lines.push(`new mode ${newMode}`);
-      }
-
-      // Show index line
-      // Example: index 2c33c4f..f50b8db 100644
-      lines.push(
-        `index ${oldRevision.substring(0, 7)}..${newRevision.substring(0, 7)} ${newMode}`
-      );
-
-      // Show old/new path lines, omit if file is added or deleted
-      if (file.type !== 'add' && file.type !== 'copy') {
-        lines.push(`--- a/${oldPath}`);
-      } else {
-        // Representing no old file with `/dev/null`
-        lines.push('--- /dev/null');
-      }
-
-      if (file.type !== 'delete' && file.type !== 'copy') {
-        lines.push(`+++ b/${newPath}`);
-      } else {
-        // Representing no new file with `/dev/null`
-        lines.push('+++ /dev/null');
-      }
-
-      // Hunks
-      for (const hunk of file.hunks) {
-        const hunkHeader = `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`;
-        lines.push(hunkHeader + (hunk.content ? ` ${hunk.content}` : ''));
-
-        for (const change of hunk.changes) {
-          if (change.type === 'normal') {
-            lines.push(` ${change.content}`);
-          } else if (change.type === 'insert') {
-            lines.push(`+${change.content}`);
-          } else if (change.type === 'delete') {
-            lines.push(`-${change.content}`);
-          }
-        }
-      }
-
-      return lines.join('\n');
-    })
-    .join('\n');
-}
-
 const relgen = ({
   args,
   deps,
@@ -180,7 +104,7 @@ const relgen = ({
     linear?: LinearClient;
   };
 }) => {
-  const { llm, github, logger, remote } = deps;
+  const { llm, github, remote } = deps;
   // const { remoteContext, remoteWrite } = deps.remote;
 
   const getUnreleasedPrs = async ({

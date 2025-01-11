@@ -1,18 +1,21 @@
 # Relgen 📝
 
-AI-powered tool for GitHub repositories that automatically generates release notes, writes pull request descriptions, and intelligently applies labels to issues and PRs.
+AI-powered Git analysis tool that turns repository activity into meaningful release notes, PR descriptions, contribution insights, and automatic issue/PR labels.
 
 ## Features
 
-- 🤖 AI-powered content generation for:
-  - Release notes
-  - Pull request descriptions
-  - Issue labeling and categorization
+- 🤖 AI-powered content generation:
+  - Release notes with customizable perspectives (marketing, engineering, product, leadership)
+  - Smart PR descriptions with complexity analysis
+  - Automated issue and PR labeling
+  - Contribution attribution and analysis
+  - Repository activity insights
+  - Release-specific contribution tracking
 - 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
 - 🛠️ Customizable templates and prompts
-- 📦 Modular architecture with TypeScript
+- 📦 Scriptable with bash or typescript (via @relgen/core)
 
 ## Installation
 
@@ -26,11 +29,12 @@ yarn global add relgen
 
 ## CLI Usage
 
-Relgen provides a CLI tool for easy access to its features:
-
 ```bash
 # Generate release notes
 relgen remote release describe owner/repo
+
+# Analyze contributions in a release
+relgen remote release ascribe owner/repo --from v1.0.0 --to v1.1.0
 
 # Generate PR description
 relgen remote pr describe owner/repo 123
@@ -41,8 +45,11 @@ relgen remote pr label owner/repo 456
 # Auto-label an issue
 relgen remote issue label owner/repo 789
 
+# Analyze repository contributions
+relgen remote ascribe owner/repo --range "last month"
+
 # Use different LLM providers
-relgen remote release describe owner/repo --llm.provider anthropic
+relgen remote release describe owner/repo --provider anthropic
 
 # Write results back to GitHub
 relgen remote pr describe owner/repo 123 --write pr
@@ -54,9 +61,6 @@ relgen remote pr describe owner/repo 123 --prompt custom-prompt.txt
 
 # Get help
 relgen --help
-relgen release describe --help
-relgen pr describe --help
-relgen issue label --help
 ```
 
 ## Github Action
