@@ -9,8 +9,6 @@ AI-powered Git analysis tool that turns repository activity into meaningful rele
   - Smart PR descriptions with complexity analysis
   - Automated issue and PR labeling
   - Contribution attribution and analysis
-  - Repository activity insights
-  - Release-specific contribution tracking
 - 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
