@@ -32,7 +32,7 @@ export const createRemoteService = (
 ) => {
   if (clients.github) {
     return remoteService(
-      githubContextService(clients.github),
+      githubContextService(clients.github, logger),
       githubWriteService(clients.github, logger)
     );
   }
