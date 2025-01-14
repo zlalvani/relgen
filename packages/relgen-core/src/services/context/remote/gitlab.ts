@@ -5,6 +5,32 @@ import type { RemoteContextService } from './types';
 export const gitlabContextService = (gitlab: GitlabClient) => {
   return {
     pr: {
+      unreleased: async ({
+        owner,
+        repo,
+        include,
+      }: {
+        owner: string;
+        repo: string;
+        include: { issues: boolean };
+      }) => {
+        return [];
+      },
+      betweenTags: async ({
+        owner,
+        repo,
+        include,
+        fromTag,
+        toTag,
+      }: {
+        owner: string;
+        repo: string;
+        include: { issues: boolean };
+        fromTag?: string;
+        toTag?: string;
+      }) => {
+        return [];
+      },
       diff: async ({
         owner,
         repo,

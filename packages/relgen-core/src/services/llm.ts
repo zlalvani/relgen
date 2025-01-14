@@ -36,6 +36,7 @@ export const languageModelService = (
         context: {
           changes: {
             pr: PullRequestContext;
+            labels: LabelContext[];
             issue?: IssueContext;
             ticket?: TicketContext;
           }[];
@@ -105,6 +106,7 @@ export const languageModelService = (
             ${change.pr.prompt}
             ${change.ticket?.prompt || ''}
             ${change.issue?.prompt || ''}
+            ${change.labels.map((label) => label.prompt).join('\n')}
             </change>
             `
           )

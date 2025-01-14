@@ -105,7 +105,6 @@ const relgen = ({
   };
 }) => {
   const { llm, github, remote } = deps;
-  // const { remoteContext, remoteWrite } = deps.remote;
 
   const getUnreleasedPrs = async ({
     owner,
@@ -444,74 +443,40 @@ const relgen = ({
               | {
                   issues?: boolean;
                   tickets?: boolean;
-                  labels?: boolean;
                 };
           }
         ) => {
           const { owner, repo, toTag, fromTag, unreleased } = args;
 
-          const newPrs = unreleased
-            ? await getUnreleasedPrs({ owner, repo })
-            : await getPrsBetweenTags({
+          const contexts = unreleased
+            ? await remote.context.pr.unreleased({
+                owner,
+                repo,
+                include: {
+                  issues:
+                    (options?.include === 'all' || options?.include?.issues) ??
+                    false,
+                },
+              })
+            : await remote.context.pr.betweenTags({
                 owner,
                 repo,
                 fromTag,
                 toTag,
+                include: {
+                  issues:
+                    (options?.include === 'all' || options?.include?.issues) ??
+                    false,
+                },
               });
 
-          if (!newPrs.length) {
+          if (!contexts.length) {
             return null;
           }
 
-          const issues =
-            options?.include === 'all' || options?.include?.issues
-              ? await github.graphql.repo.pull.batchClosingIssuesReferences({
-                  owner,
-                  repo,
-                  nums: newPrs.map((pr) => pr.number),
-                })
-              : [];
-
-          const issueMap = issues.reduce((acc, curr) => {
-            acc.set(curr.num, curr.issues);
-            return acc;
-          }, new Map<number, (typeof issues)[number]['issues']>());
-
-          const changeContexts = newPrs.map((pr) => {
-            // Only take the first linked issue for now
-            const issue = issueMap.get(pr.number)?.[0];
-
-            // TODO: include labels for the issues and comments for both
-            return {
-              pr: makeContext({
-                type: 'pr',
-                data: pr,
-                prompt: dedent`
-                <pr>
-                  <title>${pr.title}</title>
-                  <body>${pr.body}</body>
-                  ${pr.labels.length > 0 ? `<labels>${pr.labels.join(',')}</labels>` : ''}
-                </pr>
-                `,
-              }),
-              issue: issue
-                ? makeContext({
-                    type: 'issue',
-                    data: issue,
-                    prompt: dedent`
-                    <issue>
-                      <title>${issue.title}</title>
-                      <body>${issue.body}</body>
-                    </issue>
-                    `,
-                  })
-                : undefined,
-            };
-          });
-
           const result = await llm.release.describe(
             {
-              changes: changeContexts,
+              changes: contexts,
             },
             {
               persona: options?.persona,

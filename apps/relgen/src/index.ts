@@ -356,7 +356,6 @@ release
   .addOption(
     new Option('--include <include...>', 'include').choices([
       'issues',
-      'labels',
       'tickets',
       'all',
     ] as const)
@@ -391,7 +390,6 @@ release
       : {
           issues: includeSet.has('issues'),
           tickets: includeSet.has('tickets'),
-          labels: includeSet.has('labels'),
         };
 
     const result = unreleased

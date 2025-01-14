@@ -1,6 +1,7 @@
 import type { File } from 'gitdiff-parser';
 import type pino from 'pino';
 import { dedent, parallel } from 'radashi';
+import type { SharedUnionFields } from 'type-fest';
 import type { GithubClient } from '../../../clients/github';
 import { makeContext } from '../../context';
 import type { RemoteContextService } from './types';
@@ -94,8 +95,323 @@ export const githubContextService = (
   github: GithubClient,
   logger: pino.Logger
 ) => {
+  const getUnreleasedPrs = async ({
+    owner,
+    repo,
+  }: {
+    owner: string;
+    repo: string;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
+
+    const defaultBranch = githubRepo.data.default_branch;
+
+    const latest = await github.rest.repos.getLatestRelease({
+      owner,
+      repo,
+    });
+
+    return (
+      await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: latest?.data.published_at
+          ? new Date(latest.data.published_at)
+          : undefined,
+      })
+    ).data.items;
+  };
+
+  const getPrsBetweenTags = async ({
+    owner,
+    repo,
+    fromTag,
+    toTag,
+  }: {
+    owner: string;
+    repo: string;
+    fromTag?: string;
+    toTag?: string;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
+
+    const defaultBranch = githubRepo.data.default_branch;
+
+    const from = fromTag
+      ? await github.$rest.repos.getReleaseByTag({
+          owner,
+          repo,
+          tag: fromTag,
+        })
+      : undefined;
+
+    const to = toTag
+      ? await github.$rest.repos.getReleaseByTag({
+          owner,
+          repo,
+          tag: toTag,
+        })
+      : undefined;
+
+    return (
+      await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: from?.data.published_at
+          ? new Date(from.data.published_at)
+          : undefined,
+        mergedBefore: to?.data.published_at
+          ? new Date(to.data.published_at)
+          : undefined,
+      })
+    ).data.items;
+  };
+
+  const getTimerangePrs = async ({
+    owner,
+    repo,
+    from,
+    to,
+  }: {
+    owner: string;
+    repo: string;
+    from?: Date;
+    to?: Date;
+  }) => {
+    const githubRepo = await github.$rest.repos.get({
+      owner,
+      repo,
+    });
+
+    const defaultBranch = githubRepo.data.default_branch;
+
+    return (
+      await github.rest.search.issuesAndPullRequests({
+        repo: {
+          owner,
+          repo,
+        },
+        type: 'pr',
+        base: defaultBranch,
+        status: 'merged',
+        mergedAfter: from,
+        mergedBefore: to,
+      })
+    ).data.items;
+  };
+
+  const makePrContext = (args: {
+    pr: SharedUnionFields<
+      | Awaited<
+          ReturnType<
+            | typeof getUnreleasedPrs
+            | typeof getPrsBetweenTags
+            | typeof getTimerangePrs
+          >
+        >[number]
+      | Awaited<ReturnType<(typeof github)['$rest']['pulls']['get']>>['data']
+    >;
+    owner: string;
+    repo: string;
+    num: number;
+    issue?: Awaited<
+      ReturnType<
+        (typeof github)['graphql']['repo']['pull']['batchClosingIssuesReferences']
+      >
+    >[number]['issues'][number];
+  }) => {
+    const { pr, owner, repo, num, issue } = args;
+
+    // TODO: include labels for the issues and comments for both
+    return {
+      pr: makeContext({
+        type: 'pr',
+        data: {
+          pr,
+          owner,
+          repo,
+          num,
+        },
+        prompt: dedent`
+          <pr>
+            <title>${pr.title}</title>
+            <body>
+            ${pr.body}
+            </body>
+          </pr>
+        `,
+      }),
+      labels: pr.labels.map((label) => {
+        return makeContext({
+          type: 'label',
+          data: label,
+          prompt: dedent`
+            <label>
+            ${
+              typeof label === 'string'
+                ? `<name>${label}</name>`
+                : `<name>${label.name}</name>`
+            }
+            </label>
+          `,
+        });
+      }),
+      issue: issue
+        ? makeContext({
+            type: 'issue',
+            data: {
+              issue,
+              owner,
+              repo,
+              num,
+            },
+            prompt: dedent`
+              <issue>
+                <title>${issue.title}</title>
+                <body>${issue.body}</body>
+              </issue>
+            `,
+          })
+        : undefined,
+    };
+  };
+
+  const batchMakePrContext = (args: {
+    prs: Awaited<
+      ReturnType<
+        | typeof getUnreleasedPrs
+        | typeof getPrsBetweenTags
+        | typeof getTimerangePrs
+      >
+    >;
+    issues: Awaited<
+      ReturnType<
+        (typeof github)['graphql']['repo']['pull']['batchClosingIssuesReferences']
+      >
+    >;
+    owner: string;
+    repo: string;
+    include: {
+      issues: boolean;
+    };
+  }) => {
+    const { prs, owner, repo, issues, include } = args;
+
+    const issueMap = issues.reduce((acc, curr) => {
+      acc.set(curr.num, curr.issues);
+      return acc;
+    }, new Map<number, (typeof issues)[number]['issues']>());
+
+    return prs.map((pr) => {
+      // Only take the first linked issue for now
+      const issue = issueMap.get(pr.number)?.[0];
+
+      return makePrContext({
+        pr,
+        owner,
+        repo,
+        num: pr.number,
+        issue: include.issues ? issue : undefined,
+      });
+    });
+  };
+
   return {
     pr: {
+      unreleased: async ({
+        owner,
+        repo,
+        include,
+      }: {
+        owner: string;
+        repo: string;
+        include: {
+          issues: boolean;
+        };
+      }) => {
+        const prs = await getUnreleasedPrs({
+          owner,
+          repo,
+        });
+
+        if (!prs.length) {
+          return [];
+        }
+
+        const issues = include.issues
+          ? await github.graphql.repo.pull.batchClosingIssuesReferences({
+              owner,
+              repo,
+              nums: prs.map((pr) => pr.number),
+            })
+          : [];
+
+        return batchMakePrContext({
+          prs,
+          issues,
+          owner,
+          repo,
+          include,
+        });
+      },
+      betweenTags: async ({
+        owner,
+        repo,
+        include,
+        fromTag,
+        toTag,
+      }: {
+        owner: string;
+        repo: string;
+        include: {
+          issues: boolean;
+        };
+        fromTag?: string;
+        toTag?: string;
+      }) => {
+        const prs = await getPrsBetweenTags({
+          owner,
+          repo,
+          fromTag,
+          toTag,
+        });
+
+        if (!prs.length) {
+          return [];
+        }
+
+        const issues = include.issues
+          ? await github.graphql.repo.pull.batchClosingIssuesReferences({
+              owner,
+              repo,
+              nums: prs.map((pr) => pr.number),
+            })
+          : [];
+
+        return batchMakePrContext({
+          prs,
+          issues,
+          owner,
+          repo,
+          include,
+        });
+      },
       diff: async ({
         owner,
         repo,
@@ -160,40 +476,12 @@ export const githubContextService = (
           repo,
           pull_number: num,
         });
-        return {
-          pr: makeContext({
-            type: 'pr',
-            data: {
-              pr,
-              owner,
-              repo,
-              num,
-            },
-            prompt: dedent`
-          <pr>
-            <title>${pr.data.title}</title>
-            <body>
-            ${pr.data.body}
-            </body>
-          </pr>
-        `,
-          }),
-          labels: pr.data.labels.map((label) => {
-            return makeContext({
-              type: 'label',
-              data: label,
-              prompt: dedent`
-                <label>
-                ${
-                  typeof label === 'string'
-                    ? `<name>${label}</name>`
-                    : `<name>${label.name}</name>`
-                }
-                </label>
-              `,
-            });
-          }),
-        };
+        return makePrContext({
+          pr: pr.data,
+          owner,
+          repo,
+          num,
+        });
       },
       files: async ({
         owner,
