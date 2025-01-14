@@ -1,6 +1,6 @@
-# Relgen 📝
+![relgen](./assets/relgen.png)
 
-AI-powered Git analysis tool that turns repository activity into meaningful release notes, PR descriptions, contribution insights, and automatic issue/PR labels.
+Meaningful release notes, PR descriptions, labeling, and more—on autopilot. 🤖
 
 ## Features
 
@@ -13,7 +13,7 @@ AI-powered Git analysis tool that turns repository activity into meaningful rele
 - 🎯 Linear integration for ticket tracking
 - ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
 - 🛠️ Customizable templates and prompts
-- 📦 Scriptable with bash or typescript (via @relgen/core)
+- 📦 Scriptable with bash (via the relgen CLI) or typescript (via @relgen/core)
 
 ## Installation
 
@@ -61,34 +61,6 @@ relgen remote pr describe owner/repo 123 --prompt custom-prompt.txt
 relgen --help
 ```
 
-## Github Action
-
-```yaml
-name: Relgen
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-
-jobs:
-  relgen:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: write
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-      - uses: zlalvani/relgen-action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
-          llm-provider: openai # or anthropic
-          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
-```
-
-For more documentation on the github action, please see its [README](https://github.com/zlalvani/relgen-action).
-
 ## Configuration
 
 Relgen can be configured through environment variables or a `.relgen.json` file. Any required variables that aren't provided will be requested via CLI prompt.
@@ -127,6 +99,34 @@ Create a `.relgen.json` in your project root:
   }
 }
 ```
+
+## Github Action
+
+```yaml
+name: Relgen
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  relgen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - uses: zlalvani/relgen-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
+          llm-provider: openai # or anthropic
+          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
+```
+
+For more documentation on the github action, please see its [README](https://github.com/zlalvani/relgen-action).
 
 ## Contributing
 
