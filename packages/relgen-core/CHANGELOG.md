@@ -1,5 +1,12 @@
 # @relgen/core
 
+## 0.0.13
+
+### Patch Changes
+
+- 87ff778: fixed broken file exclusions (currently only hardcoded lock files)
+- 13b86cf: fixed binary files being incorrectly fed as context when describing PRs
+
 ## 0.0.12
 
 ### Patch Changes

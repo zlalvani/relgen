@@ -1,6 +1,6 @@
 {
   "name": "relgen",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "debug": "pnpm with-env node --inspect=9229 dist/index.mjs",
