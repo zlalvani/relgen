@@ -1,6 +1,6 @@
 ![relgen](./assets/relgen.png)
-
-Meaningful release notes, PR descriptions, labeling, and more—on autopilot. 🤖
+---
+> Meaningful release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
 ## Features
 
