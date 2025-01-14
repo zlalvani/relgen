@@ -8,6 +8,34 @@ import type {
 
 export type RemoteContextService = {
   pr: {
+    unreleased: (args: {
+      owner: string;
+      repo: string;
+      include: {
+        issues: boolean;
+      };
+    }) => Promise<
+      {
+        pr: PullRequestContext;
+        labels: LabelContext[];
+        issue?: IssueContext;
+      }[]
+    >;
+    betweenTags: (args: {
+      owner: string;
+      repo: string;
+      include: {
+        issues: boolean;
+      };
+      fromTag?: string;
+      toTag?: string;
+    }) => Promise<
+      {
+        pr: PullRequestContext;
+        labels: LabelContext[];
+        issue?: IssueContext;
+      }[]
+    >;
     diff: (args: {
       owner: string;
       repo: string;
