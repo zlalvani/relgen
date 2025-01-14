@@ -1,5 +1,8 @@
 ![relgen](./assets/relgen.png)
 ---
+
+Relgen is an AI-powered developer tool that streamlines your release management and documentation workflow. It automatically generates high-quality release notes, PR descriptions, and issue labels by analyzing your codebase and version control history. With support for multiple LLM providers and integrations with GitHub and Linear, Relgen helps development teams maintain clear, consistent, and meaningful documentation without the manual overhead.
+
 > Meaningful release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
 ## Features
