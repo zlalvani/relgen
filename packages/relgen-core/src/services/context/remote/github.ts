@@ -1,4 +1,5 @@
 import type { File } from 'gitdiff-parser';
+import type pino from 'pino';
 import { dedent, parallel } from 'radashi';
 import type { GithubClient } from '../../../clients/github';
 import { makeContext } from '../../context';
@@ -79,7 +80,20 @@ function serializeToGitHubDiff(files: File[]): string {
     .join('\n');
 }
 
-export const githubContextService = (github: GithubClient) => {
+function isText(content: string) {
+  try {
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    decoder.decode(Buffer.from(content, 'base64'));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const githubContextService = (
+  github: GithubClient,
+  logger: pino.Logger
+) => {
   return {
     pr: {
       diff: async ({
@@ -198,25 +212,80 @@ export const githubContextService = (github: GithubClient) => {
           owner,
           repo,
           pull_number: num,
+          per_page: 100,
         });
 
         return await parallel(
           3,
-          files.data.filter(
-            (file) => !excludedFiles || !excludedFiles.has(file.filename)
-          ),
+          files.data
+            .filter(
+              (file) => !excludedFiles || !excludedFiles.has(file.filename)
+            )
+            .filter((file) => file.filename),
           async (file) => {
+            if (excludedContexts?.has('file-content')) {
+              return makeContext({
+                type: 'pr-file',
+                data: file,
+                prompt: dedent`
+                <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                  <patch>
+                  ${file.patch}
+                  </patch>
+                </file>
+                `,
+              });
+            }
+
+            const ref = (
+              await github.$rest.pulls.get({
+                owner,
+                repo,
+                pull_number: num,
+              })
+            ).data.head.sha;
+
+            const retrieved = await github.$rest.repos.getContent({
+              owner,
+              repo,
+              path: file.filename,
+              ref,
+            });
+
+            if (
+              Array.isArray(retrieved.data) ||
+              retrieved.data.type !== 'file' ||
+              retrieved.data.encoding !== 'base64' ||
+              !isText(retrieved.data.content)
+            ) {
+              logger.debug({
+                message: 'Skipping file content',
+                retrieved: retrieved.data,
+              });
+
+              return makeContext({
+                type: 'pr-file',
+                data: file,
+                prompt: dedent`
+                <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                </file>
+                `,
+              });
+            }
+
             return makeContext({
               type: 'pr-file',
               data: file,
               prompt: dedent`
-              <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
-                ${excludedContexts?.has('file-content') ? '' : `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>`}
-                <patch>
-                ${file.patch}
-                </patch>
-              </file>
-              `,
+            <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+              <content>
+              ${Buffer.from(retrieved.data.content, 'base64').toString('utf-8')}
+              </content>
+              <patch>
+              ${file.patch}
+              </patch>
+            </file>
+            `,
             });
           }
         );
