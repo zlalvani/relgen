@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.18
+
+### Patch Changes
+
+- abab38c: remove unused include labels option in release describe
+- Updated dependencies [abab38c]
+  - @relgen/core@0.0.14
+
 ## 0.0.17
 
 ### Patch Changes
