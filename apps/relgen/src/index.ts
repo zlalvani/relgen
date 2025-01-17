@@ -77,7 +77,7 @@ const cli = program
 
     if (config) {
       configFile = configSchema.parse(
-        JSON.parse(await readFile(config, 'utf-8'))
+        JSON.parse((await readFile(config, 'utf-8')).trim())
       );
     }
 
@@ -376,11 +376,11 @@ release
     let prompt: string | undefined;
 
     if (templateFile) {
-      template = await readFile(templateFile, 'utf-8');
+      template = (await readFile(templateFile, 'utf-8')).trim();
     }
 
     if (promptFile) {
-      prompt = await readFile(promptFile, 'utf-8');
+      prompt = (await readFile(promptFile, 'utf-8')).trim();
     }
 
     const includeSet = new Set(includeArray);
@@ -537,11 +537,11 @@ pr.command('describe')
     let prompt: string | undefined;
 
     if (templateFile) {
-      template = await readFile(templateFile, 'utf-8');
+      template = (await readFile(templateFile, 'utf-8')).trim();
     }
 
     if (promptFile) {
-      prompt = await readFile(promptFile, 'utf-8');
+      prompt = (await readFile(promptFile, 'utf-8')).trim();
     }
 
     const result = await relgen.remote.pr.describe(
