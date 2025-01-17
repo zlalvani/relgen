@@ -494,7 +494,9 @@ export const githubContextService = (
         repo: string;
         num: number;
         excludedFiles?: Set<string>;
-        excludedContexts?: Set<'ticket' | 'file-content'>;
+        excludedContexts?: {
+          fileContent?: boolean;
+        };
       }) => {
         const files = await github.$rest.pulls.listFiles({
           owner,
@@ -511,7 +513,7 @@ export const githubContextService = (
             )
             .filter((file) => file.filename),
           async (file) => {
-            if (excludedContexts?.has('file-content')) {
+            if (excludedContexts?.fileContent) {
               return makeContext({
                 type: 'pr-file',
                 data: file,

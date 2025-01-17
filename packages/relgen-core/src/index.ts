@@ -523,7 +523,9 @@ const relgen = ({
               owner,
               repo,
               num,
-              excludedContexts,
+              excludedContexts: {
+                fileContent: excludedContexts.has('file-content'),
+              },
               excludedFiles,
             }),
           ]);
