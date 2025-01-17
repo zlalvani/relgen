@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.15
+
+### Patch Changes
+
+- 1ef6b55: fix improperly trimmed templates and prompts
+
 ## 0.0.14
 
 ### Patch Changes
