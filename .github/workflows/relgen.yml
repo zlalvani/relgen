@@ -21,3 +21,4 @@ jobs:
           llm-model: gpt-4o-mini
           description-template: apps/relgen/examples/templates/describe-pr.md
           description-prompt: apps/relgen/examples/prompts/describe-pr.txt
+          verbose: true

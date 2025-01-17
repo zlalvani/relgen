@@ -55,7 +55,9 @@ export type RemoteContextService = {
       repo: string;
       num: number;
       excludedFiles?: Set<string>;
-      excludedContexts?: Set<'ticket' | 'file-content'>;
+      excludedContexts?: {
+        fileContent?: boolean;
+      };
     }) => Promise<PullRequestFileContext[]>;
   };
   issue: {
