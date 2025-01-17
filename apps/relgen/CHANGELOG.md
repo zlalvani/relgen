@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.19
+
+### Patch Changes
+
+- 1ef6b55: fix improperly trimmed templates and prompts
+- Updated dependencies [1ef6b55]
+  - @relgen/core@0.0.15
+
 ## 0.0.18
 
 ### Patch Changes
