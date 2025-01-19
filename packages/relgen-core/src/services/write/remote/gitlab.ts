@@ -9,6 +9,7 @@ import type { RemoteWriteService } from './types';
 export const gitlabWriteService = (gitlab: GitlabClient) => {
   return {
     pr: {
+      review: async ({ context, generated }) => {},
       update: async ({
         context,
         title,

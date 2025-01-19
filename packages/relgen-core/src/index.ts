@@ -297,7 +297,12 @@ const relgen = ({
                     async (file) => {
                       return makeContext({
                         type: 'pr-file',
-                        data: file,
+                        data: {
+                          fileData: file,
+                          patch: file.patch ?? null,
+                          path: file.filename,
+                          content: null,
+                        },
                         prompt: dedent`
                         <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
                           ${includeFileContent ? `<content>\n${await github.http.getRawContent(file.raw_url)}\n</content>` : ''}
@@ -489,6 +494,59 @@ const relgen = ({
         },
       },
       pr: {
+        review: async (
+          args: {
+            owner: string;
+            repo: string;
+            num: number;
+            rules: string[];
+          },
+          options?: {
+            extraInstructions?: string;
+            write?: boolean;
+          }
+        ) => {
+          const { owner, repo, num, rules } = args;
+
+          const [pr, files] = await Promise.all([
+            remote.context.pr.get({
+              owner,
+              repo,
+              num,
+            }),
+            remote.context.pr.files({
+              owner,
+              repo,
+              num,
+              excludedContexts: {
+                fileContent: true,
+              },
+            }),
+          ]);
+
+          const result = await llm.pr.review(
+            {
+              pr: pr.pr,
+              files,
+              rules,
+            },
+            {
+              extraInstructions: options?.extraInstructions,
+            }
+          );
+
+          if (options?.write) {
+            await remote.write.pr.review({
+              context: {
+                pr: pr.pr,
+                files,
+              },
+              generated: result,
+            });
+          }
+
+          return result.object;
+        },
         describe: async (
           args: {
             owner: string;

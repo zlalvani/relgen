@@ -22,6 +22,7 @@
     "@linear/sdk": "^35.0.0",
     "@octokit/types": "^13.6.2",
     "ai": "^4.0.18",
+    "fuse.js": "^7.0.0",
     "gitdiff-parser": "^0.3.1",
     "octokit": "^4.0.2",
     "pino": "^9.5.0",

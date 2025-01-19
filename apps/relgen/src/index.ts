@@ -608,4 +608,40 @@ pr.command('label')
     );
   });
 
+pr.command('review')
+  .argument('<owner>', 'issue URL or owner/repo or owner')
+  .argument('[repo]', 'repository or PR number')
+  .argument('[number]', 'PR number', (val) => toInt(val, undefined))
+  .option('-r, --rule <rule...>', 'rules for the reviewer to follow')
+  .option('-w, --write', 'publish the review')
+  .description('review a pull request')
+  .action(async (first, second, third, options) => {
+    const { owner, repo, num } = parseIssueArgs(first, second, third);
+
+    const { rule, write } = options;
+
+    const result = await relgen.remote.pr.review(
+      {
+        owner,
+        repo,
+        num,
+        rules: rule ?? [],
+      },
+      {
+        write,
+      }
+    );
+
+    for (const review of result.reviews) {
+      output(review, (review) => {
+        return dedent`
+          contextId: ${review.fileContextId}
+          contextStart: ${review.start}
+          contextEnd: ${review.end}
+          review: ${review.comment}
+        `;
+      });
+    }
+  });
+
 await cli.parseAsync();
