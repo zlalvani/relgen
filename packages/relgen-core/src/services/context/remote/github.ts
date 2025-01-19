@@ -3,7 +3,7 @@ import type pino from 'pino';
 import { dedent, parallel } from 'radashi';
 import type { SharedUnionFields } from 'type-fest';
 import type { GithubClient } from '../../../clients/github';
-import { makeContext } from '../../context';
+import { type PullRequestFileContext, makeContext } from '../../context';
 import type { RemoteContextService } from './types';
 
 // ChatGPT generated - serialize a list of files to a GitHub diff
@@ -497,13 +497,54 @@ export const githubContextService = (
         excludedContexts?: {
           fileContent?: boolean;
         };
-      }) => {
+      }): Promise<
+        (PullRequestFileContext & {
+          data: {
+            fileData: Awaited<
+              ReturnType<(typeof github)['$rest']['pulls']['listFiles']>
+            >['data'][number];
+          };
+        })[]
+      > => {
         const files = await github.$rest.pulls.listFiles({
           owner,
           repo,
           pull_number: num,
           per_page: 100,
         });
+
+        if (excludedContexts?.fileContent) {
+          return files.data
+            .filter(
+              (file) => !excludedFiles || !excludedFiles.has(file.filename)
+            )
+            .map((file) => {
+              return makeContext({
+                type: 'pr-file',
+                data: {
+                  fileData: file,
+                  patch: file.patch ?? null,
+                  path: file.filename,
+                  content: null,
+                },
+                prompt: dedent`
+                <file path="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                  <patch>
+                  ${file.patch}
+                  </patch>
+                </file>
+                `,
+              });
+            });
+        }
+
+        const ref = (
+          await github.$rest.pulls.get({
+            owner,
+            repo,
+            pull_number: num,
+          })
+        ).data.head.sha;
 
         return await parallel(
           3,
@@ -513,28 +554,6 @@ export const githubContextService = (
             )
             .filter((file) => file.filename),
           async (file) => {
-            if (excludedContexts?.fileContent) {
-              return makeContext({
-                type: 'pr-file',
-                data: file,
-                prompt: dedent`
-                <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
-                  <patch>
-                  ${file.patch}
-                  </patch>
-                </file>
-                `,
-              });
-            }
-
-            const ref = (
-              await github.$rest.pulls.get({
-                owner,
-                repo,
-                pull_number: num,
-              })
-            ).data.head.sha;
-
             const retrieved = await github.$rest.repos.getContent({
               owner,
               repo,
@@ -555,9 +574,14 @@ export const githubContextService = (
 
               return makeContext({
                 type: 'pr-file',
-                data: file,
+                data: {
+                  fileData: file,
+                  patch: null,
+                  content: null,
+                  path: file.filename,
+                },
                 prompt: dedent`
-                <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                <file path="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
                 </file>
                 `,
               });
@@ -565,9 +589,16 @@ export const githubContextService = (
 
             return makeContext({
               type: 'pr-file',
-              data: file,
+              data: {
+                fileData: file,
+                patch: file.patch ?? null,
+                path: file.filename,
+                content: Buffer.from(retrieved.data.content, 'base64').toString(
+                  'utf-8'
+                ),
+              },
               prompt: dedent`
-            <file name="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+            <file path="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
               <content>
               ${Buffer.from(retrieved.data.content, 'base64').toString('utf-8')}
               </content>
@@ -675,3 +706,6 @@ export type GithubPullRequestContext = Awaited<
 export type GithubDiffContext = Awaited<
   ReturnType<GithubContextService['pr']['diff']>
 >;
+export type GithubPullRequestFileContext = Awaited<
+  ReturnType<GithubContextService['pr']['files']>
+>[number];

@@ -18,7 +18,15 @@ export type Context<TType extends ContextType, TData> = {
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type PullRequestContext<TData = any> = Context<'pr', TData>;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-export type PullRequestFileContext<TData = any> = Context<'pr-file', TData>;
+export type PullRequestFileContext<TData = any> = Context<
+  'pr-file',
+  {
+    path: string;
+    patch: string | null;
+    content: string | null;
+    fileData: TData;
+  }
+>;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type DiffContext<TData = any> = Context<'diff', TData>;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
