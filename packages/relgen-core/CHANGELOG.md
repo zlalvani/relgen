@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.17
+
+### Patch Changes
+
+- 2c6b005: improved pr review prompt
+
 ## 0.0.16
 
 ### Patch Changes
