@@ -30,15 +30,6 @@ export const githubWriteService = (
         };
         generated: GeneratedPullRequestReview;
       }) => {
-        // const diff = await github.rest.pulls.diff({
-        //   owner: context.pr.data.owner,
-        //   repo: context.pr.data.repo,
-        //   num: context.pr.data.num,
-        // });
-
-        // logger.debug({
-        //   message: diff.data.$raw,
-        // });
         logger.debug({
           object: generated.object,
         });
@@ -77,12 +68,12 @@ export const githubWriteService = (
 
             const fuse = new Fuse(adjustedLines, {
               keys: ['line'],
-              threshold: 0.1,
+              threshold: 0.05,
             });
 
             const findLineIndex = (
               fuse: Fuse<string>,
-              reviewSearch: GeneratedPullRequestReview['object']['reviews'][number]['start']
+              reviewSearch: GeneratedPullRequestReview['object']['reviews'][number]
             ) => {
               const matches = fuse.search(reviewSearch.line.trim());
 
@@ -95,43 +86,25 @@ export const githubWriteService = (
                 return null;
               }
 
-              if (matches.length > 1) {
-                const prevMatch = fuse.search(
-                  reviewSearch.previousLine.trim()
-                )[0];
-                const nextMatch = fuse.search(reviewSearch.nextLine.trim())[0];
+              const sortedMatches = matches.sort(
+                (a, b) => a.refIndex - b.refIndex
+              );
 
-                const prevMatches = new Set(
-                  fuse
-                    .search(reviewSearch.previousLine.trim())
-                    .map((r) => r.refIndex)
-                );
-                const nextMatches = new Set(
-                  fuse
-                    .search(reviewSearch.nextLine.trim())
-                    .map((r) => r.refIndex)
-                );
+              const selectedLine = sortedMatches[reviewSearch.occurrence];
 
-                if (!prevMatch || !nextMatch) {
-                  logger.warn({
-                    message: 'Ambiguous line',
-                    review,
-                    matches,
-                  });
-                  return null;
-                }
-
-                return adjustedLines.findIndex(
-                  (_, index) =>
-                    prevMatches.has(index - 1) && nextMatches.has(index + 1)
-                  // index > prevMatch.refIndex && index < nextMatch.refIndex
-                );
+              if (!selectedLine) {
+                logger.warn({
+                  message: 'Could not find line',
+                  review,
+                  matches,
+                });
+                return null;
               }
 
-              return matches[0].refIndex;
+              return selectedLine.refIndex;
             };
 
-            const startLine = findLineIndex(fuse, review.start);
+            const startLine = findLineIndex(fuse, review);
 
             if (!startLine) {
               return null;
@@ -140,32 +113,8 @@ export const githubWriteService = (
             return {
               path: diffHunk.data.path,
               position: startLine,
-              // start_line: startLine,
               body: review.comment,
             };
-
-            // if (!review.end) {
-            //   return {
-            //     path: diffHunk.data.path,
-            //     position: startLine,
-            //     // start_line: startLine,
-            //     body: review.comment,
-            //   };
-            // }
-
-            // const endLine = findLineIndex(fuse, review.end);
-
-            // if (!endLine) {
-            //   return null;
-            // }
-
-            // return {
-            //   path: diffHunk.data.path,
-            //   start_line: startLine,
-            //   line: endLine,
-            //   // position: startLine,
-            //   body: review.comment,
-            // };
           })
           .filter(<T>(x: T | null): x is T => x !== null);
 
@@ -178,17 +127,11 @@ export const githubWriteService = (
           repo: context.pr.data.repo,
           pull_number: context.pr.data.num,
           event: 'COMMENT',
-          // body: 'Relgen comment',
           body:
             comments.length > 0
-              ? (generated.object.comment ?? 'Reviewed by Relgen')
+              ? (generated.object.summary ?? 'Reviewed by Relgen')
               : 'LGTM',
           comments,
-          // body: generated.object.body,
-          // event: generated.object.event,
-          // comments: generated.object.comments,
-          // comments_url: context.files[0].data.comments_url,
-          // commit_id: context.files[0].data.commit_id,
         });
       },
       update: async ({

@@ -154,14 +154,12 @@ export const languageModelService = (
       ) => {
         const { pr, files, rules } = context;
 
-        //         DO NOT INCLUDE preceding '+' or '-' characters in your review or contexts.
-
         const system = dedent`
         You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given rules.
         Use proper English grammar and punctuation like a native speaker.
         Refer to files by the file context ID given in the prompt.
         Patches are provided, these include preceding '+' or '-' characters to indicate added or removed lines.
-        When providing line context, print the relevant line verbatim alongside its preceding and following lines.
+        When providing line context, print the relevant line verbatim.
         You may include multiple reviews for the same file if necessary.
         Return an empty array of reviews if there are no important issues to address.
         Use the given context to review the PR, following the rules given.
@@ -198,10 +196,12 @@ export const languageModelService = (
         return await generateObject({
           model,
           schema: z.object({
-            comment: z
+            summary: z
               .string()
               .optional()
-              .describe('The comment to be left on the PR. Keep it short.'),
+              .describe(
+                'The summary to be left on the PR as a comment. Keep it short.'
+              ),
             reviews: z.array(
               z.object({
                 fileContextId: z
@@ -209,25 +209,17 @@ export const languageModelService = (
                   .describe(
                     'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
                   ),
-                start: z
-                  .object({
-                    previousLine: z.string(),
-                    line: z.string(),
-                    nextLine: z.string(),
-                  })
+                line: z
+                  .string()
                   .describe(
-                    'The line context (including the line itself and its neighbors, three lines total) of the start of the review. Include the leading "+" or "-" character if present.'
+                    'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
                   ),
-                // end: z
-                //   .object({
-                //     previousLine: z.string(),
-                //     line: z.string(),
-                //     nextLine: z.string(),
-                //   })
-                //   .optional()
-                //   .describe(
-                //     'The line context (including the line itself and its neighbors, three lines total) of the end of the review. DO NOT INCLUDE IF UNNEEDED'
-                //   ),
+                occurrence: z
+                  .number()
+                  .default(0)
+                  .describe(
+                    'If the line occurs multiple times, which one is it? (0-indexed)'
+                  ),
                 comment: z
                   .string()
                   .describe(
