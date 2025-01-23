@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.21
+
+### Patch Changes
+
+- 2c6b005: added support for rules in files for remote pr review
+- Updated dependencies [2c6b005]
+  - @relgen/core@0.0.17
+
 ## 0.0.20
 
 ### Patch Changes
