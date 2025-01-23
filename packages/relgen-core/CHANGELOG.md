@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.16
+
+### Patch Changes
+
+- d3bc55b: added review command and api
+
 ## 0.0.15
 
 ### Patch Changes
