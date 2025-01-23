@@ -1,11 +1,17 @@
+import Fuse from 'fuse.js';
 import type pino from 'pino';
 import { unique } from 'radashi';
 import type { GithubClient } from '../../../clients/github';
 import type {
   GithubIssueContext,
   GithubPullRequestContext,
+  GithubPullRequestFileContext,
 } from '../../context/remote/github';
-import type { GeneratedIssueLabel, GeneratedPullRequestLabel } from '../../llm';
+import type {
+  GeneratedIssueLabel,
+  GeneratedPullRequestLabel,
+  GeneratedPullRequestReview,
+} from '../../llm';
 import type { RemoteWriteService } from './types';
 
 export const githubWriteService = (
@@ -14,6 +20,120 @@ export const githubWriteService = (
 ) => {
   return {
     pr: {
+      review: async ({
+        context,
+        generated,
+      }: {
+        context: {
+          pr: GithubPullRequestContext;
+          files: GithubPullRequestFileContext[];
+        };
+        generated: GeneratedPullRequestReview;
+      }) => {
+        logger.debug({
+          object: generated.object,
+        });
+
+        const comments = generated.object.reviews
+          .map((review) => {
+            const diffHunk = context.files.at(review.fileContextId);
+
+            if (!diffHunk) {
+              logger.warn({
+                message: 'Could not find file for review',
+                review,
+              });
+              return null;
+            }
+
+            diffHunk.data.patch;
+
+            if (!diffHunk.data.patch) {
+              logger.warn({
+                message: 'Could not find patch for review',
+                review,
+              });
+              return null;
+            }
+
+            const diffLines = diffHunk.data.patch.split('\n');
+
+            const hunkStartLine = diffLines.findIndex((line) =>
+              line.trim().startsWith('@@')
+            );
+
+            const adjustedLines = diffLines
+              .slice(hunkStartLine)
+              .map((line) => line.trim());
+
+            const fuse = new Fuse(adjustedLines, {
+              keys: ['line'],
+              threshold: 0.05,
+            });
+
+            const findLineIndex = (
+              fuse: Fuse<string>,
+              reviewSearch: GeneratedPullRequestReview['object']['reviews'][number]
+            ) => {
+              const matches = fuse.search(reviewSearch.line.trim());
+
+              if (!matches[0]) {
+                logger.warn({
+                  message: 'Could not find line',
+                  review,
+                  matches,
+                });
+                return null;
+              }
+
+              const sortedMatches = matches.sort(
+                (a, b) => a.refIndex - b.refIndex
+              );
+
+              const selectedLine = sortedMatches[reviewSearch.occurrence];
+
+              if (!selectedLine) {
+                logger.warn({
+                  message: 'Could not find line',
+                  review,
+                  matches,
+                });
+                return null;
+              }
+
+              return selectedLine.refIndex;
+            };
+
+            const startLine = findLineIndex(fuse, review);
+
+            if (!startLine) {
+              return null;
+            }
+
+            return {
+              path: diffHunk.data.path,
+              position: startLine,
+              body: review.comment,
+            };
+          })
+          .filter(<T>(x: T | null): x is T => x !== null);
+
+        logger.debug({
+          comments,
+        });
+
+        return await github.$rest.pulls.createReview({
+          owner: context.pr.data.owner,
+          repo: context.pr.data.repo,
+          pull_number: context.pr.data.num,
+          event: 'COMMENT',
+          body:
+            comments.length > 0
+              ? (generated.object.summary ?? 'Reviewed by Relgen')
+              : 'LGTM',
+          comments,
+        });
+      },
       update: async ({
         context,
         title,
@@ -91,10 +211,7 @@ export const githubWriteService = (
           labels:
             mode === 'set'
               ? generated.object.labels
-              : unique([
-                  ...context.data.pr.data.labels,
-                  ...generated.object.labels,
-                ]),
+              : unique([...context.data.pr.labels, ...generated.object.labels]),
         });
       },
     },

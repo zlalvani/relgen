@@ -1,5 +1,13 @@
-import type { IssueContext, PullRequestContext } from '../../context';
-import type { GeneratedIssueLabel, GeneratedPullRequestLabel } from '../../llm';
+import type {
+  IssueContext,
+  PullRequestContext,
+  PullRequestFileContext,
+} from '../../context';
+import type {
+  GeneratedIssueLabel,
+  GeneratedPullRequestLabel,
+  GeneratedPullRequestReview,
+} from '../../llm';
 
 export type RemoteWriteService = {
   pr: {
@@ -17,6 +25,13 @@ export type RemoteWriteService = {
       context: PullRequestContext;
       generated: GeneratedPullRequestLabel;
       mode: 'add' | 'set';
+    }) => Promise<unknown>;
+    review: (args: {
+      context: {
+        pr: PullRequestContext;
+        files: PullRequestFileContext[];
+      };
+      generated: GeneratedPullRequestReview;
     }) => Promise<unknown>;
   };
   issue: {

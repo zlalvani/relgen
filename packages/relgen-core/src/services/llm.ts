@@ -31,6 +31,12 @@ export const languageModelService = (
   logger: pino.Logger
 ) => {
   return {
+    repo: {
+      patterns: {
+        structure: async () => {},
+        code: async () => {},
+      },
+    },
     release: {
       describe: async (
         context: {
@@ -136,6 +142,96 @@ export const languageModelService = (
       },
     },
     pr: {
+      review: async (
+        context: {
+          pr: PullRequestContext;
+          files: PullRequestFileContext[];
+          rules: string[];
+        },
+        options?: {
+          extraInstructions?: string;
+        }
+      ) => {
+        const { pr, files, rules } = context;
+
+        const system = dedent`
+        You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given rules.
+        Use proper English grammar and punctuation like a native speaker.
+        Refer to files by the file context ID given in the prompt.
+        Patches are provided, these include preceding '+' or '-' characters to indicate added or removed lines.
+        When providing line context, print the relevant line verbatim.
+        You may include multiple reviews for the same file if necessary.
+        Return an empty array of reviews if there are no important issues to address.
+        Use the given context to review the PR, following the rules given.
+        Make sure to explain each review comment clearly and concisely.
+        DO NOT MENTION ISSUES UNRELATED TO THE GIVEN RULES.
+        `;
+
+        const prompt = dedent`
+          Here's the PR context:
+          ${pr.prompt}
+          
+          <files>
+          ${files
+            .map((file, id) => {
+              return dedent`
+              <file-context id=${id}>
+              ${file.prompt}
+              </file-context>
+              `;
+            })
+            .join('\n')}
+          </files>
+
+          <rules>
+            ${rules.map((rule) => `<rule>\n${rule}\n<rule>`).join('\n')}
+          </rules>
+
+          ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
+          `;
+
+        logger.debug({ message: system });
+        logger.debug({ message: prompt });
+
+        return await generateObject({
+          model,
+          schema: z.object({
+            summary: z
+              .string()
+              .optional()
+              .describe(
+                'The summary to be left on the PR as a comment. Keep it short.'
+              ),
+            reviews: z.array(
+              z.object({
+                fileContextId: z
+                  .number()
+                  .describe(
+                    'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
+                  ),
+                line: z
+                  .string()
+                  .describe(
+                    'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
+                  ),
+                occurrence: z
+                  .number()
+                  .default(0)
+                  .describe(
+                    'If the line occurs multiple times, which one is it? (0-indexed)'
+                  ),
+                comment: z
+                  .string()
+                  .describe(
+                    'The specific review feedback for the selected context. This is different from the top level comment.'
+                  ),
+              })
+            ),
+          }),
+          system,
+          prompt,
+        });
+      },
       describe: async (
         context: {
           change: {
@@ -373,6 +469,9 @@ export type GeneratedIssueLabel = Awaited<
 export type GeneratedPullRequestLabel = Awaited<
   ReturnType<LanguageModelService['pr']['label']>
 >;
-export type GeneratedGithubPullRequest = Awaited<
+export type GeneratedPullRequest = Awaited<
   ReturnType<LanguageModelService['pr']['describe']>
+>;
+export type GeneratedPullRequestReview = Awaited<
+  ReturnType<LanguageModelService['pr']['review']>
 >;
