@@ -68,6 +68,32 @@ export const configSchema = z.object({
         .optional(),
     })
     .optional(),
+  commands: z
+    .object({
+      remote: z
+        .object({
+          pr: z
+            .object({
+              review: z
+                .object({
+                  rules: z
+                    .array(
+                      z.union([
+                        z.string(),
+                        z.object({
+                          file: z.string(),
+                        }),
+                      ])
+                    )
+                    .optional(),
+                })
+                .optional(),
+            })
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;
