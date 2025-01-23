@@ -164,6 +164,7 @@ export const languageModelService = (
         Return an empty array of reviews if there are no important issues to address.
         Use the given context to review the PR, following the rules given.
         Make sure to explain each review comment clearly and concisely.
+        If no change is needed, do not include a review.
         DO NOT MENTION ISSUES UNRELATED TO THE GIVEN RULES.
         `;
 
@@ -202,31 +203,35 @@ export const languageModelService = (
               .describe(
                 'The summary to be left on the PR as a comment. Keep it short.'
               ),
-            reviews: z.array(
-              z.object({
-                fileContextId: z
-                  .number()
-                  .describe(
-                    'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
-                  ),
-                line: z
-                  .string()
-                  .describe(
-                    'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
-                  ),
-                occurrence: z
-                  .number()
-                  .default(0)
-                  .describe(
-                    'If the line occurs multiple times, which one is it? (0-indexed)'
-                  ),
-                comment: z
-                  .string()
-                  .describe(
-                    'The specific review feedback for the selected context. This is different from the top level comment.'
-                  ),
-              })
-            ),
+            reviews: z
+              .array(
+                z.object({
+                  fileContextId: z
+                    .number()
+                    .describe(
+                      'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
+                    ),
+                  line: z
+                    .string()
+                    .describe(
+                      'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
+                    ),
+                  occurrence: z
+                    .number()
+                    .default(0)
+                    .describe(
+                      'If the line occurs multiple times, which one is it? (0-indexed)'
+                    ),
+                  comment: z
+                    .string()
+                    .describe(
+                      'The specific review feedback for the selected context. This is different from the top level comment.'
+                    ),
+                })
+              )
+              .describe(
+                'The list of reviews to be left on the PR. If a change looks good, do not include a review.'
+              ),
           }),
           system,
           prompt,

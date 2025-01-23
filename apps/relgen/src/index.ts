@@ -7,7 +7,7 @@ import { type Relgen, createRelgen } from '@relgen/core';
 import * as chrono from 'chrono-node/en';
 import kleur from 'kleur';
 import pino from 'pino';
-import { dedent, toInt } from 'radashi';
+import { dedent, parallel, toInt } from 'radashi';
 import { z } from 'zod';
 import {
   type Config,
@@ -620,28 +620,48 @@ pr.command('review')
 
     const { rule, write } = options;
 
+    const configRules = configFile?.commands?.remote?.pr?.review?.rules
+      ? await parallel(
+          10,
+          configFile.commands.remote.pr.review.rules,
+          async (rule) => {
+            if (typeof rule === 'string') {
+              return rule;
+            }
+
+            return (await readFile(rule.file, 'utf-8')).trim();
+          }
+        )
+      : [];
+
+    const rules = [...(rule ?? []), ...configRules];
+
     const result = await relgen.remote.pr.review(
       {
         owner,
         repo,
         num,
-        rules: rule ?? [],
+        rules,
       },
       {
         write,
       }
     );
 
-    for (const review of result.reviews) {
-      output(review, (review) => {
-        return dedent`
-          contextId: ${review.fileContextId}
-          contextStart: ${review.start}
-          contextEnd: ${review.end}
-          review: ${review.comment}
-        `;
-      });
-    }
+    output(result, (result) => {
+      return dedent`
+        # ${result.summary}
+        ${result.reviews
+          .map((review) => {
+            return dedent`
+            ## ${review.comment}
+            line: ${review.line}
+            comment: ${review.comment}
+          `;
+          })
+          .join('\n')}
+      `;
+    });
   });
 
 await cli.parseAsync();

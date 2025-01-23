@@ -11,5 +11,14 @@
     "linear": {
       "token": "your-linear-token-here"
     }
+  },
+  "commands": {
+    "remote": {
+      "pr": {
+        "review": {
+          "rules": [{ "file": "examples/rules/injectable.md" }]
+        }
+      }
+    }
   }
 }
