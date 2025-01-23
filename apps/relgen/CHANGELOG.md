@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.20
+
+### Patch Changes
+
+- d3bc55b: added review command and api
+- Updated dependencies [d3bc55b]
+  - @relgen/core@0.0.16
+
 ## 0.0.19
 
 ### Patch Changes
