@@ -5,6 +5,8 @@
 
 **relgen** is an AI-powered developer tool that streamlines your development workflow through automated code reviews, release management, and documentation. It analyzes your codebase and version control history to provide intelligent PR reviews, generate high-quality release summaries, create PR descriptions, and automate issue labeling.
 
+Getting started is simple - just install with npm/pnpm/yarn and run a single command. No complex configuration required, though you can customize everything from templates to LLM providers if you want to.
+
 ## Features
 
 - 🤖 AI-powered content generation:
