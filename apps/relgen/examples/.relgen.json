@@ -16,7 +16,7 @@
     "remote": {
       "pr": {
         "review": {
-          "rules": [{ "file": "examples/rules/injectable.md" }]
+          "rules": [{ "file": "apps/relgen/examples/rules/injectable.md" }]
         }
       }
     }
