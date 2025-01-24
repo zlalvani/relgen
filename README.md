@@ -1,16 +1,16 @@
 ![relgen](./assets/relgen.png)
 ---
 
-> Meaningful release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
+> Code reviews, release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
 **relgen** is an AI-powered developer tool that streamlines your development workflow through automated code reviews, release management, and documentation. It analyzes your codebase and version control history to provide intelligent PR reviews, generate high-quality release summaries, create PR descriptions, and automate issue labeling.
 
 ## Features
 
 - 🤖 AI-powered content generation:
+  - Automated PR reviews against custom rules
   - Release summaries with customizable perspectives (marketing, engineering, product, leadership)
   - Smart PR descriptions with complexity analysis
-  - Automated PR reviews against custom rules
   - Automated issue and PR labeling
   - Contribution attribution and analysis
 - 🔄 Smart GitHub integration for PR and issue context
