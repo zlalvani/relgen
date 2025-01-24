@@ -13,6 +13,7 @@ import {
   type Config,
   anthropicModelChoices,
   configSchema,
+  deepseekModelChoices,
   openaiModelChoices,
   providerChoices,
   providerModels,
@@ -24,7 +25,8 @@ let resolvedOpts: {
   provider: (typeof providerChoices)[number];
   model:
     | (typeof openaiModelChoices)[number]
-    | (typeof anthropicModelChoices)[number];
+    | (typeof anthropicModelChoices)[number]
+    | (typeof deepseekModelChoices)[number];
   llmToken: string;
   logger?: pino.Logger;
 };
@@ -61,6 +63,7 @@ const cli = program
     new Option('-m, --model <model>', 'llm model').choices([
       ...openaiModelChoices,
       ...anthropicModelChoices,
+      ...deepseekModelChoices,
     ])
   )
   .hook('preAction', async () => {
@@ -107,6 +110,7 @@ const cli = program
       llmToken ||
       (provider === 'openai' && process.env.OPENAI_API_KEY) ||
       (provider === 'anthropic' && process.env.ANTHROPIC_API_KEY) ||
+      (provider === 'deepseek' && process.env.DEEPSEEK_API_KEY) ||
       configFile?.llm?.apiKey ||
       (await password({
         message: 'Enter LLM token',
@@ -650,7 +654,7 @@ pr.command('review')
 
     output(result, (result) => {
       return dedent`
-        # ${result.summary}
+        # ${result.summary ?? 'LGTM'}
         ${result.reviews
           .map((review) => {
             return dedent`
