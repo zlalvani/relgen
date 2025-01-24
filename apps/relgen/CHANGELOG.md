@@ -1,5 +1,14 @@
 # relgen
 
+## 0.0.22
+
+### Patch Changes
+
+- da8183e: added --rule-file option to remote pr review
+- d306f46: added support for deepseek
+- Updated dependencies [d306f46]
+  - @relgen/core@0.0.18
+
 ## 0.0.21
 
 ### Patch Changes

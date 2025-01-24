@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.18
+
+### Patch Changes
+
+- d306f46: added support for deepseek
+
 ## 0.0.17
 
 ### Patch Changes
