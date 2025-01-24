@@ -10,6 +10,7 @@
 - 🤖 AI-powered content generation:
   - Release summaries with customizable perspectives (marketing, engineering, product, leadership)
   - Smart PR descriptions with complexity analysis
+  - Automated PR reviews against custom rules
   - Automated issue and PR labeling
   - Contribution attribution and analysis
 - 🔄 Smart GitHub integration for PR and issue context
