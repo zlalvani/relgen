@@ -31,6 +31,9 @@ yarn global add relgen
 ## CLI Usage
 
 ```bash
+# Review a PR
+relgen remote pr review owner/repo 123 --rule "don't use the database library directly in route handlers, write a data mapper"
+
 # Generate release notes
 relgen remote release describe owner/repo
 
@@ -45,9 +48,6 @@ relgen remote pr label owner/repo 456
 
 # Auto-label an issue
 relgen remote issue label owner/repo 789
-
-# Review a PR
-relgen remote pr review owner/repo 123 --rule rule1.md rule2.md
 
 # Analyze repository contributions
 relgen remote ascribe owner/repo --range "last month"
