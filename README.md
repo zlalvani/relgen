@@ -3,7 +3,7 @@
 
 > Meaningful release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
-**relgen** is an AI-powered developer tool that streamlines your release management and documentation workflow. It automatically generates high-quality release summaries, PR descriptions, and issue labels by analyzing your codebase and version control history.
+**relgen** is an AI-powered developer tool that streamlines your development workflow through automated code reviews, release management, and documentation. It analyzes your codebase and version control history to provide intelligent PR reviews, generate high-quality release summaries, create PR descriptions, and automate issue labeling.
 
 ## Features
 
