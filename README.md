@@ -1,20 +1,23 @@
 ![relgen](./assets/relgen.png)
 ---
 
-> Meaningful release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
+> Code reviews, release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
-**relgen** is an AI-powered developer tool that streamlines your release management and documentation workflow. It automatically generates high-quality release summaries, PR descriptions, and issue labels by analyzing your codebase and version control history.
+**relgen** is an AI-powered developer tool that streamlines your development workflow through automated code reviews, release management, and documentation. It analyzes your codebase and version control history to provide intelligent PR reviews, generate high-quality release summaries, create PR descriptions, and automate issue labeling.
+
+Getting started is simple - just install with npm/pnpm/yarn and run a single command. No complex configuration required, though you can customize everything from templates to LLM providers if you want to.
 
 ## Features
 
 - 🤖 AI-powered content generation:
+  - Automated PR reviews against custom rules
   - Release summaries with customizable perspectives (marketing, engineering, product, leadership)
   - Smart PR descriptions with complexity analysis
   - Automated issue and PR labeling
   - Contribution attribution and analysis
 - 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
-- ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
+- ⚡ Support for multiple LLM providers (OpenAI, Anthropic, Deepseek)
 - 🛠️ Customizable templates and prompts
 - 📦 Scriptable with bash (via the relgen CLI) or typescript (via @relgen/core)
 
@@ -31,6 +34,9 @@ yarn global add relgen
 ## CLI Usage
 
 ```bash
+# Review a PR
+relgen remote pr review owner/repo 123 --rule "don't use the database library directly in route handlers, write a data mapper"
+
 # Generate release notes
 relgen remote release describe owner/repo
 
@@ -74,6 +80,8 @@ Relgen can be configured through environment variables or a `.relgen.json` file.
 export OPENAI_API_KEY="your-api-key"
 # or for Anthropic
 export ANTHROPIC_API_KEY="your-api-key"
+# or for Deepseek
+export DEEPSEEK_API_KEY="your-api-key"
 
 # GitHub access
 export GITHUB_TOKEN="your-github-token"
@@ -124,9 +132,9 @@ jobs:
       - uses: zlalvani/relgen-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
-          llm-provider: openai # or anthropic
-          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
+          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY or DEEPSEEK_API_KEY
+          llm-provider: openai # or anthropic or deepseek
+          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 or deepseek-chat etc
 ```
 
 For more documentation on the github action, please see its [README](https://github.com/zlalvani/relgen-action).

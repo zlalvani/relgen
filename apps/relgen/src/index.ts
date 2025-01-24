@@ -617,6 +617,7 @@ pr.command('review')
   .argument('[repo]', 'repository or PR number')
   .argument('[number]', 'PR number', (val) => toInt(val, undefined))
   .option('-r, --rule <rule...>', 'rules for the reviewer to follow')
+  .option('--rule-file <rule-file...>', 'rules for the reviewer to follow')
   .option('-w, --write', 'publish the review')
   .description('review a pull request')
   .action(async (first, second, third, options) => {
@@ -638,7 +639,13 @@ pr.command('review')
         )
       : [];
 
-    const rules = [...(rule ?? []), ...configRules];
+    const ruleFiles = options.ruleFile
+      ? await parallel(10, options.ruleFile, async (file) =>
+          (await readFile(file, 'utf-8')).trim()
+        )
+      : [];
+
+    const rules = [...(rule ?? []), ...configRules, ...ruleFiles];
 
     const result = await relgen.remote.pr.review(
       {
