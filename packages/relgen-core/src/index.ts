@@ -1,4 +1,5 @@
 import type { AnthropicMessagesModelId } from '@ai-sdk/anthropic/internal';
+import type { DeepSeekProvider } from '@ai-sdk/deepseek';
 import type { OpenAIChatModelId } from '@ai-sdk/openai/internal';
 import { LinearClient } from '@linear/sdk';
 import pino from 'pino';
@@ -25,6 +26,11 @@ export type RelgenOptions = {
         apiKey: string;
         provider: 'anthropic';
         model: AnthropicMessagesModelId;
+      }
+    | {
+        apiKey: string;
+        provider: 'deepseek';
+        model: Parameters<DeepSeekProvider['chat']>[0];
       };
   write?: {
     release?: boolean;

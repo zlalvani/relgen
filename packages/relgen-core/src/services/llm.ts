@@ -1,4 +1,5 @@
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAI } from '@ai-sdk/openai';
 import { type LanguageModel, generateObject } from 'ai';
 import type pino from 'pino';
@@ -458,6 +459,12 @@ export const createLanguageModelService = (
     case 'anthropic': {
       return languageModelService(
         createAnthropic({ apiKey }).languageModel(options.model),
+        logger
+      );
+    }
+    case 'deepseek': {
+      return languageModelService(
+        createDeepSeek({ apiKey }).languageModel(options.model),
         logger
       );
     }

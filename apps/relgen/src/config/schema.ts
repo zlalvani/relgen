@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const providerChoices = ['openai', 'anthropic'] as const;
+export const providerChoices = ['openai', 'anthropic', 'deepseek'] as const;
 export const openaiModelChoices = [
   'o1-preview',
   'o1-mini',
@@ -23,10 +23,15 @@ export const anthropicModelChoices = [
   'claude-3-sonnet-20240229',
   'claude-3-haiku-20240307',
 ] as const;
+export const deepseekModelChoices = [
+  'deepseek-chat',
+  'deepseek-reasoner',
+] as const;
 
 export const providerModels = {
   openai: openaiModelChoices,
   anthropic: anthropicModelChoices,
+  deepseek: deepseekModelChoices,
 } as const;
 
 // from https://github.com/colinhacks/zod/discussions/2790
