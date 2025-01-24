@@ -46,6 +46,9 @@ relgen remote pr label owner/repo 456
 # Auto-label an issue
 relgen remote issue label owner/repo 789
 
+# Review a PR
+relgen remote pr review owner/repo 123 --rule rule1.md rule2.md
+
 # Analyze repository contributions
 relgen remote ascribe owner/repo --range "last month"
 
