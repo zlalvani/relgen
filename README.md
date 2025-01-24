@@ -14,7 +14,7 @@
   - Contribution attribution and analysis
 - 🔄 Smart GitHub integration for PR and issue context
 - 🎯 Linear integration for ticket tracking
-- ⚡ Support for multiple LLM providers (OpenAI, Anthropic)
+- ⚡ Support for multiple LLM providers (OpenAI, Anthropic, Deepseek)
 - 🛠️ Customizable templates and prompts
 - 📦 Scriptable with bash (via the relgen CLI) or typescript (via @relgen/core)
 
@@ -74,6 +74,8 @@ Relgen can be configured through environment variables or a `.relgen.json` file.
 export OPENAI_API_KEY="your-api-key"
 # or for Anthropic
 export ANTHROPIC_API_KEY="your-api-key"
+# or for Deepseek
+export DEEPSEEK_API_KEY="your-api-key"
 
 # GitHub access
 export GITHUB_TOKEN="your-github-token"
@@ -124,9 +126,9 @@ jobs:
       - uses: zlalvani/relgen-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY
-          llm-provider: openai # or anthropic
-          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 etc
+          llm-key: ${{ secrets.OPENAI_API_KEY }} # or ANTHROPIC_API_KEY or DEEPSEEK_API_KEY
+          llm-provider: openai # or anthropic or deepseek
+          llm-model: gpt-4o-mini # or claude-3-sonnet-20240229 or deepseek-chat etc
 ```
 
 For more documentation on the github action, please see its [README](https://github.com/zlalvani/relgen-action).
