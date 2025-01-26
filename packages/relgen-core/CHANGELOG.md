@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.19
+
+### Patch Changes
+
+- 664d374: fixed error when attempting to build context from deleted files in a pull request
+
 ## 0.0.18
 
 ### Patch Changes
