@@ -1,5 +1,14 @@
 # relgen
 
+## 0.0.24
+
+### Patch Changes
+
+- 66e6fd3: add option for evaluating rules separately during pr review
+- 66e6fd3: fix config files incorrectly rejecting deepseek
+- Updated dependencies [66e6fd3]
+  - @relgen/core@0.0.20
+
 ## 0.0.23
 
 ### Patch Changes

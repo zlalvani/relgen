@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.20
+
+### Patch Changes
+
+- 66e6fd3: add option for evaluating rules separately during pr review
+
 ## 0.0.19
 
 ### Patch Changes
