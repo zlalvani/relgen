@@ -17,8 +17,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           llm-key: ${{ secrets.OPENAI_API_KEY }}
-          llm-provider: openai
-          llm-model: gpt-4o-mini
+          llm-provider: deepseek
+          llm-model: deepseek-chat
           description-template: apps/relgen/examples/templates/describe-pr.md
           description-prompt: apps/relgen/examples/prompts/describe-pr.txt
           config: apps/relgen/examples/.relgen.json

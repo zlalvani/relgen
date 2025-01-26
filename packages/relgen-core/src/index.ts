@@ -509,6 +509,7 @@ const relgen = ({
           },
           options?: {
             extraInstructions?: string;
+            ruleEval?: 'together' | 'separate';
             write?: boolean;
           }
         ) => {
@@ -538,6 +539,7 @@ const relgen = ({
             },
             {
               extraInstructions: options?.extraInstructions,
+              ruleEval: options?.ruleEval,
             }
           );
 
@@ -551,7 +553,7 @@ const relgen = ({
             });
           }
 
-          return result.object;
+          return result;
         },
         describe: async (
           args: {

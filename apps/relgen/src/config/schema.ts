@@ -57,6 +57,11 @@ export const configSchema = z.object({
         model: unionOfLiterals(anthropicModelChoices),
         apiKey: z.string().optional(),
       }),
+      z.object({
+        provider: z.literal('deepseek'),
+        model: unionOfLiterals(deepseekModelChoices),
+        apiKey: z.string().optional(),
+      }),
     ])
     .optional(),
   integrations: z
@@ -81,6 +86,7 @@ export const configSchema = z.object({
             .object({
               review: z
                 .object({
+                  ruleEvalMode: z.enum(['together', 'separate']).optional(),
                   rules: z
                     .array(
                       z.union([

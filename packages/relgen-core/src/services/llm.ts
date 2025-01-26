@@ -25,6 +25,36 @@ export const PullRequestDescribeSchema = z.object({
   description: z.string().optional().describe('Your new PR description'),
 });
 
+const PullRequestReviewSchema = z
+  .array(
+    z.object({
+      fileContextId: z
+        .number()
+        .describe(
+          'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
+        ),
+      line: z
+        .string()
+        .describe(
+          'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
+        ),
+      occurrence: z
+        .number()
+        .default(0)
+        .describe(
+          'If the line occurs multiple times, which one is it? (0-indexed)'
+        ),
+      comment: z
+        .string()
+        .describe(
+          'The specific review feedback for the selected context. This is different from the top level comment.'
+        ),
+    })
+  )
+  .describe(
+    'The list of reviews to be left on the PR. If a change looks good, do not include a review.'
+  );
+
 export type PullRequestDescribe = z.infer<typeof PullRequestDescribeSchema>;
 
 export const languageModelService = (
@@ -151,25 +181,32 @@ export const languageModelService = (
         },
         options?: {
           extraInstructions?: string;
+          ruleEval?: 'together' | 'separate';
         }
       ) => {
         const { pr, files, rules } = context;
 
+        let { ruleEval } = options ?? {};
+
+        if (!ruleEval) {
+          ruleEval = 'together';
+        }
+
         const system = dedent`
-        You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given rules.
+        You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given ${ruleEval === 'separate' ? 'rule' : 'rules'}.
         Use proper English grammar and punctuation like a native speaker.
         Refer to files by the file context ID given in the prompt.
         Patches are provided, these include preceding '+' or '-' characters to indicate added or removed lines.
         When providing line context, print the relevant line verbatim.
         You may include multiple reviews for the same file if necessary.
         Return an empty array of reviews if there are no important issues to address.
-        Use the given context to review the PR, following the rules given.
+        Use the given context to review the PR, following the given ${ruleEval === 'separate' ? 'rule' : 'rules'}.
         Make sure to explain each review comment clearly and concisely.
         If no change is needed, do not include a review.
-        DO NOT MENTION ISSUES UNRELATED TO THE GIVEN RULES.
+        DO NOT MENTION ISSUES UNRELATED TO THE GIVEN ${ruleEval === 'separate' ? 'RULE' : 'RULES'}.
         `;
 
-        const prompt = dedent`
+        const promptPrefix = dedent`
           Here's the PR context:
           ${pr.prompt}
           
@@ -185,58 +222,101 @@ export const languageModelService = (
             .join('\n')}
           </files>
 
-          <rules>
-            ${rules.map((rule) => `<rule>\n${rule}\n<rule>`).join('\n')}
-          </rules>
-
           ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
           `;
 
-        logger.debug({ message: system });
-        logger.debug({ message: prompt });
+        if (ruleEval === 'together') {
+          const prompt = dedent`
+            ${promptPrefix}
 
-        return await generateObject({
+            <rules>
+              ${rules.map((rule) => `<rule>\n${rule}\n<rule>`).join('\n')}
+            </rules>
+            `;
+
+          logger.debug({ message: system });
+          logger.debug({ message: prompt });
+
+          const result = await generateObject({
+            model,
+            schema: z.object({
+              summary: z
+                .string()
+                .optional()
+                .describe(
+                  'The summary to be left on the PR as a comment. Keep it short.'
+                ),
+              reviews: PullRequestReviewSchema,
+            }),
+            system,
+            prompt,
+          });
+
+          return result.object;
+        }
+
+        const reviews: z.infer<typeof PullRequestReviewSchema> = [];
+
+        for (const rule of rules) {
+          const prompt = dedent`
+            ${promptPrefix}
+
+            <rule>
+            ${rule}
+            </rule>
+            `;
+
+          logger.debug({ message: system });
+          logger.debug({ message: prompt });
+
+          const review = await generateObject({
+            model,
+            schema: PullRequestReviewSchema,
+            system,
+            prompt,
+          });
+
+          reviews.push(...review.object);
+        }
+
+        const summarySystem = dedent`
+        You are an expert software engineer tasked with summarizing the reviews for a pull request.
+        Use the given context to generate a summary that will be added as a comment.
+        Keep your output concise and relevant.
+        Use proper English grammar and punctuation like a native speaker.
+        Don't add a summary if there are no reviews.
+        `;
+
+        const summaryPrompt = dedent`
+        Here are the reviews for the PR:
+        <reviews>
+        ${reviews
+          .map(
+            (review) => dedent`
+            <review>
+              <line>${review.line}</line>
+              <comment>${review.comment}</comment>
+            </review>
+            `
+          )
+          .join('\n')}
+        </reviews>
+        `;
+
+        logger.debug({ message: summarySystem });
+        logger.debug({ message: summaryPrompt });
+
+        const summary = await generateObject({
           model,
-          schema: z.object({
-            summary: z
-              .string()
-              .optional()
-              .describe(
-                'The summary to be left on the PR as a comment. Keep it short.'
-              ),
-            reviews: z
-              .array(
-                z.object({
-                  fileContextId: z
-                    .number()
-                    .describe(
-                      'The ID of the file context as given in the prompt (can be repeated if the review lines do not overlap)'
-                    ),
-                  line: z
-                    .string()
-                    .describe(
-                      'The line the review is about. Be sure to include the leading "+" or "-" character if present.'
-                    ),
-                  occurrence: z
-                    .number()
-                    .default(0)
-                    .describe(
-                      'If the line occurs multiple times, which one is it? (0-indexed)'
-                    ),
-                  comment: z
-                    .string()
-                    .describe(
-                      'The specific review feedback for the selected context. This is different from the top level comment.'
-                    ),
-                })
-              )
-              .describe(
-                'The list of reviews to be left on the PR. If a change looks good, do not include a review.'
-              ),
-          }),
-          system,
-          prompt,
+          schema: z.string().optional(),
+          system: summarySystem,
+          prompt: summaryPrompt,
         });
+
+        return {
+          summary: summary.object,
+          reviews,
+        };
       },
       describe: async (
         context: {
@@ -452,7 +532,7 @@ export const createLanguageModelService = (
   switch (options.provider) {
     case 'openai': {
       return languageModelService(
-        createOpenAI({ apiKey }).chat(options.model),
+        createOpenAI({ apiKey, compatibility: 'strict' }).chat(options.model),
         logger
       );
     }

@@ -1,8 +1,8 @@
 {
   "llm": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "apiKey": "your-openai-api-key-here"
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "apiKey": "your-deepseek-api-key-here"
   },
   "integrations": {
     "github": {
@@ -16,6 +16,7 @@
     "remote": {
       "pr": {
         "review": {
+          "ruleEvalMode": "separate",
           "rules": [
             { "file": "apps/relgen/examples/rules/injectable.md" },
             { "file": "apps/relgen/examples/rules/typos.md" }

@@ -31,10 +31,10 @@ export const githubWriteService = (
         generated: GeneratedPullRequestReview;
       }) => {
         logger.debug({
-          object: generated.object,
+          object: generated,
         });
 
-        const comments = generated.object.reviews
+        const comments = generated.reviews
           .map((review) => {
             const diffHunk = context.files.at(review.fileContextId);
 
@@ -73,7 +73,7 @@ export const githubWriteService = (
 
             const findLineIndex = (
               fuse: Fuse<string>,
-              reviewSearch: GeneratedPullRequestReview['object']['reviews'][number]
+              reviewSearch: GeneratedPullRequestReview['reviews'][number]
             ) => {
               const matches = fuse.search(reviewSearch.line.trim());
 
@@ -129,7 +129,7 @@ export const githubWriteService = (
           event: 'COMMENT',
           body:
             comments.length > 0
-              ? (generated.object.summary ?? 'Reviewed by Relgen')
+              ? (generated.summary ?? 'Reviewed by Relgen')
               : 'LGTM',
           comments,
         });
