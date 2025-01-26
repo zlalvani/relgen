@@ -319,7 +319,12 @@ export const languageModelService = (
           await generateObject({
             model,
             schema: z.object({
-              summary: z.string().optional(),
+              summary: z
+                .string()
+                .optional()
+                .describe(
+                  'The summary to be left on the PR as a comment. Keep it short.'
+                ),
             }),
             system: summarySystem,
             prompt: summaryPrompt,
