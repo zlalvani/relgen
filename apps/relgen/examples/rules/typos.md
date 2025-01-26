@@ -1,0 +1,2 @@
+Keep an eye out for common typos in variable names and strings, usually caused by swapping adjacent letters.
+Also ensure spelling and grammar are correct, especially in strings that will be exposed to end users. 
