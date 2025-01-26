@@ -538,13 +538,11 @@ export const githubContextService = (
             });
         }
 
-        const ref = (
-          await github.$rest.pulls.get({
-            owner,
-            repo,
-            pull_number: num,
-          })
-        ).data.head.sha;
+        const pull = await github.$rest.pulls.get({
+          owner,
+          repo,
+          pull_number: num,
+        });
 
         return await parallel(
           3,
@@ -554,11 +552,30 @@ export const githubContextService = (
             )
             .filter((file) => file.filename),
           async (file) => {
+            if (file.status === 'removed') {
+              return makeContext({
+                type: 'pr-file',
+                data: {
+                  fileData: file,
+                  patch: file.patch ?? null,
+                  content: null,
+                  path: file.filename,
+                },
+                prompt: dedent`
+                <file path="${file.filename}" status="${file.status}" additions="${file.additions}" deletions="${file.deletions}">
+                  <patch>
+                  ${file.patch}
+                  </patch>
+                </file>
+                `,
+              });
+            }
+
             const retrieved = await github.$rest.repos.getContent({
               owner,
               repo,
               path: file.filename,
-              ref,
+              ref: pull.data.head.ref,
             });
 
             if (
