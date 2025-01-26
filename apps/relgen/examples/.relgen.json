@@ -16,7 +16,10 @@
     "remote": {
       "pr": {
         "review": {
-          "rules": [{ "file": "apps/relgen/examples/rules/injectable.md" }]
+          "rules": [
+            { "file": "apps/relgen/examples/rules/injectable.md" },
+            { "file": "apps/relgen/examples/rules/typos.md" }
+          ]
         }
       }
     }
