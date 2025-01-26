@@ -16,6 +16,7 @@
     "remote": {
       "pr": {
         "review": {
+          "ruleEvalMode": "separate",
           "rules": [
             { "file": "apps/relgen/examples/rules/injectable.md" },
             { "file": "apps/relgen/examples/rules/typos.md" }

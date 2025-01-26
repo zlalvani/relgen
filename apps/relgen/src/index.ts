@@ -618,12 +618,22 @@ pr.command('review')
   .argument('[number]', 'PR number', (val) => toInt(val, undefined))
   .option('-r, --rule <rule...>', 'rules for the reviewer to follow')
   .option('--rule-file <rule-file...>', 'rules for the reviewer to follow')
+  .addOption(
+    new Option('--rule-eval <rule-eval>', 'rule evaluation mode').choices([
+      'together',
+      'separate',
+    ] as const)
+  )
   .option('-w, --write', 'publish the review')
   .description('review a pull request')
   .action(async (first, second, third, options) => {
     const { owner, repo, num } = parseIssueArgs(first, second, third);
 
     const { rule, write } = options;
+
+    const ruleEval =
+      options.ruleEval ??
+      configFile?.commands?.remote?.pr?.review?.ruleEvalMode;
 
     const configRules = configFile?.commands?.remote?.pr?.review?.rules
       ? await parallel(
@@ -656,6 +666,7 @@ pr.command('review')
       },
       {
         write,
+        ruleEval,
       }
     );
 
