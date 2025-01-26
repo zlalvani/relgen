@@ -230,7 +230,7 @@ export const languageModelService = (
             ${promptPrefix}
 
             <rules>
-              ${rules.map((rule) => `<rule>\n${rule}\n<rule>`).join('\n')}
+              ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
             </rules>
             `;
 
