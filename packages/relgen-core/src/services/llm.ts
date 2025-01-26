@@ -271,12 +271,14 @@ export const languageModelService = (
 
           const review = await generateObject({
             model,
-            schema: PullRequestReviewSchema,
+            schema: z.object({
+              reviews: PullRequestReviewSchema,
+            }),
             system,
             prompt,
           });
 
-          reviews.push(...review.object);
+          reviews.push(...review.object.reviews);
         }
 
         const summarySystem = dedent`
@@ -303,18 +305,29 @@ export const languageModelService = (
         </reviews>
         `;
 
+        if (reviews.length === 0) {
+          return {
+            summary: undefined,
+            reviews: [],
+          };
+        }
+
         logger.debug({ message: summarySystem });
         logger.debug({ message: summaryPrompt });
 
-        const summary = await generateObject({
-          model,
-          schema: z.string().optional(),
-          system: summarySystem,
-          prompt: summaryPrompt,
-        });
+        const summary = (
+          await generateObject({
+            model,
+            schema: z.object({
+              summary: z.string().optional(),
+            }),
+            system: summarySystem,
+            prompt: summaryPrompt,
+          })
+        ).object.summary;
 
         return {
-          summary: summary.object,
+          summary,
           reviews,
         };
       },
