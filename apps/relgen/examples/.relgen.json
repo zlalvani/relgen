@@ -1,8 +1,8 @@
 {
   "llm": {
-    "provider": "deepseek",
-    "model": "deepseek-chat",
-    "apiKey": "your-deepseek-api-key-here"
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "apiKey": "your-openai-api-key-here"
   },
   "integrations": {
     "github": {

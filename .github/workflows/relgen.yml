@@ -16,7 +16,7 @@ jobs:
       - uses: zlalvani/relgen-action@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          llm-key: ${{ secrets.OPENAI_API_KEY }}
+          llm-key: ${{ secrets.DEEPSEEK_API_KEY }}
           llm-provider: deepseek
           llm-model: deepseek-chat
           description-template: apps/relgen/examples/templates/describe-pr.md
