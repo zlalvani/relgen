@@ -3,7 +3,7 @@
 
 > Code reviews, release summaries, PR descriptions, labeling, and more—on autopilot. 🤖
 
-**relgen** is an AI-powered developer tool that automates repo management tasks through automated code reviews, PR and issue management, and release summaries. 
+**relgen** is an AI-powered developer tool that streamlines repo management through automated code reviews, change summaries, and issue organization. 
 
 Getting started is simple - just install with npm/pnpm/yarn and run a single command. No complex configuration required, though you can customize everything from templates to LLM providers if you want to.
 
