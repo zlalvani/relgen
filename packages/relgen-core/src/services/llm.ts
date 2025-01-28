@@ -182,15 +182,12 @@ export const languageModelService = (
         options?: {
           extraInstructions?: string;
           ruleEval?: 'together' | 'separate';
+          fileEval?: 'together' | 'separate';
         }
       ) => {
         const { pr, files, rules } = context;
 
-        let { ruleEval } = options ?? {};
-
-        if (!ruleEval) {
-          ruleEval = 'together';
-        }
+        const { ruleEval = 'together', fileEval = 'together' } = options ?? {};
 
         const system = dedent`
         You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given ${ruleEval === 'separate' ? 'rule' : 'rules'}.
@@ -225,60 +222,126 @@ export const languageModelService = (
           ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
           `;
 
-        if (ruleEval === 'together') {
-          const prompt = dedent`
-            ${promptPrefix}
-
-            <rules>
-              ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
-            </rules>
-            `;
-
-          logger.debug({ message: system });
-          logger.debug({ message: prompt });
-
-          const result = await generateObject({
-            model,
-            schema: z.object({
-              summary: z
-                .string()
-                .optional()
-                .describe(
-                  'The summary to be left on the PR as a comment. Keep it short.'
-                ),
-              reviews: PullRequestReviewSchema,
-            }),
-            system,
-            prompt,
-          });
-
-          return result.object;
-        }
-
         const reviews: z.infer<typeof PullRequestReviewSchema> = [];
+        
+        if (fileEval === 'together') {
+          if (ruleEval === 'together') {
+            // Case 1: Rules together, files together
+            const prompt = dedent`
+              ${promptPrefix}
+              <rules>
+                ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
+              </rules>
+              `;
 
-        for (const rule of rules) {
-          const prompt = dedent`
-            ${promptPrefix}
+            logger.debug({ message: system });
+            logger.debug({ message: prompt });
 
-            <rule>
-            ${rule}
-            </rule>
-            `;
+            const result = await generateObject({
+              model,
+              schema: z.object({
+                summary: z
+                  .string()
+                  .optional()
+                  .describe(
+                    'The summary to be left on the PR as a comment. Keep it short.'
+                  ),
+                reviews: PullRequestReviewSchema,
+              }),
+              system,
+              prompt,
+            });
 
-          logger.debug({ message: system });
-          logger.debug({ message: prompt });
+            return result.object;
+          } else {
+            // Case 2: Rules separate, files together
+            for (const rule of rules) {
+              const prompt = dedent`
+                ${promptPrefix}
+                <rule>
+                ${rule}
+                </rule>
+                `;
 
-          const review = await generateObject({
-            model,
-            schema: z.object({
-              reviews: PullRequestReviewSchema,
-            }),
-            system,
-            prompt,
-          });
+              logger.debug({ message: system });
+              logger.debug({ message: prompt });
 
-          reviews.push(...review.object.reviews);
+              const review = await generateObject({
+                model,
+                schema: z.object({
+                  reviews: PullRequestReviewSchema,
+                }),
+                system,
+                prompt,
+              });
+
+              reviews.push(...review.object.reviews);
+            }
+          }
+        } else {
+          // Files separate cases
+          for (const file of files) {
+            const filePromptPrefix = dedent`
+              Here's the PR context:
+              ${pr.prompt}
+              
+              <files>
+              <file-context id=${files.indexOf(file)}>
+              ${file.prompt}
+              </file-context>
+              </files>
+
+              ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
+              `;
+
+            if (ruleEval === 'together') {
+              // Case 3: Rules together, files separate
+              const prompt = dedent`
+                ${filePromptPrefix}
+                <rules>
+                  ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
+                </rules>
+                `;
+
+              logger.debug({ message: system });
+              logger.debug({ message: prompt });
+
+              const review = await generateObject({
+                model,
+                schema: z.object({
+                  reviews: PullRequestReviewSchema,
+                }),
+                system,
+                prompt,
+              });
+
+              reviews.push(...review.object.reviews);
+            } else {
+              // Case 4: Rules separate, files separate
+              for (const rule of rules) {
+                const prompt = dedent`
+                  ${filePromptPrefix}
+                  <rule>
+                  ${rule}
+                  </rule>
+                  `;
+
+                logger.debug({ message: system });
+                logger.debug({ message: prompt });
+
+                const review = await generateObject({
+                  model,
+                  schema: z.object({
+                    reviews: PullRequestReviewSchema,
+                  }),
+                  system,
+                  prompt,
+                });
+
+                reviews.push(...review.object.reviews);
+              }
+            }
+          }
         }
 
         const summarySystem = dedent`
