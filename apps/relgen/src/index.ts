@@ -678,7 +678,7 @@ pr.command('review')
 
     output(result, (result) => {
       return dedent`
-        # ${result.summary ?? 'LGTM'}
+        # ${(result.summary ?? result.reviews.length > 0) ? 'Reviewed by Relgen' : 'LGTM'}
         ${result.reviews
           .map((review) => {
             return dedent`
