@@ -17,6 +17,7 @@
       "pr": {
         "review": {
           "ruleEvalMode": "separate",
+          "fileEvalMode": "separate",
           "rules": [
             { "file": "apps/relgen/examples/rules/injectable.md" },
             { "file": "apps/relgen/examples/rules/typos.md" }

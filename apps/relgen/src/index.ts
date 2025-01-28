@@ -624,6 +624,13 @@ pr.command('review')
       'separate',
     ] as const)
   )
+  .addOption(
+    new Option('--file-eval <file-eval>', 'file evaluation mode').choices([
+      'together',
+      'separate',
+    ] as const)
+  )
+  .option('--footer <footer>', 'footer')
   .option('-w, --write', 'publish the review')
   .option(
     '--excluded-contexts <excluded-contexts>',
@@ -634,11 +641,15 @@ pr.command('review')
   .action(async (first, second, third, options) => {
     const { owner, repo, num } = parseIssueArgs(first, second, third);
 
-    const { rule, write, excludedContexts } = options;
+    const { rule, write, excludedContexts, footer } = options;
 
     const ruleEval =
       options.ruleEval ??
       configFile?.commands?.remote?.pr?.review?.ruleEvalMode;
+
+    const fileEval =
+      options.fileEval ??
+      configFile?.commands?.remote?.pr?.review?.fileEvalMode;
 
     const configRules = configFile?.commands?.remote?.pr?.review?.rules
       ? await parallel(
@@ -672,13 +683,15 @@ pr.command('review')
       {
         write,
         ruleEval,
+        fileEval,
+        footer,
         excludedContexts,
       }
     );
 
     output(result, (result) => {
       return dedent`
-        # ${(result.summary ?? result.reviews.length > 0) ? 'Reviewed by Relgen' : 'LGTM'}
+        # ${result.reviews.length > 0 ? (result.summary ?? 'Reviewed by Relgen') : 'LGTM'}
         ${result.reviews
           .map((review) => {
             return dedent`

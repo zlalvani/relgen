@@ -32,6 +32,7 @@ export type RemoteWriteService = {
         files: PullRequestFileContext[];
       };
       generated: GeneratedPullRequestReview;
+      footer?: string;
     }) => Promise<unknown>;
   };
   issue: {

@@ -510,8 +510,10 @@ const relgen = ({
           options?: {
             extraInstructions?: string;
             ruleEval?: 'together' | 'separate';
+            fileEval?: 'together' | 'separate';
             excludedContexts?: 'file-content'[];
             write?: boolean;
+            footer?: string;
           }
         ) => {
           const { owner, repo, num, rules } = args;
@@ -542,6 +544,7 @@ const relgen = ({
             {
               extraInstructions: options?.extraInstructions,
               ruleEval: options?.ruleEval,
+              fileEval: options?.fileEval,
             }
           );
 
@@ -552,6 +555,7 @@ const relgen = ({
                 files,
               },
               generated: result,
+              footer: options?.footer,
             });
           }
 

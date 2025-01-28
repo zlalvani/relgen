@@ -187,7 +187,7 @@ export const languageModelService = (
       ) => {
         const { pr, files, rules } = context;
 
-        const { ruleEval = 'together', fileEval = 'together' } = options ?? {};
+        const { ruleEval = 'separate', fileEval = 'separate' } = options ?? {};
 
         const system = dedent`
         You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given ${ruleEval === 'separate' ? 'rule' : 'rules'}.
@@ -203,7 +203,12 @@ export const languageModelService = (
         DO NOT MENTION ISSUES UNRELATED TO THE GIVEN ${ruleEval === 'separate' ? 'RULE' : 'RULES'}.
         `;
 
-        const promptPrefix = dedent`
+        logger.debug(files.length);
+
+        const reviews: z.infer<typeof PullRequestReviewSchema> = [];
+
+        if (fileEval === 'together') {
+          const promptPrefix = dedent`
           Here's the PR context:
           ${pr.prompt}
           
@@ -222,9 +227,6 @@ export const languageModelService = (
           ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
           `;
 
-        const reviews: z.infer<typeof PullRequestReviewSchema> = [];
-        
-        if (fileEval === 'together') {
           if (ruleEval === 'together') {
             // Case 1: Rules together, files together
             const prompt = dedent`
@@ -253,43 +255,40 @@ export const languageModelService = (
             });
 
             return result.object;
-          } else {
-            // Case 2: Rules separate, files together
-            for (const rule of rules) {
-              const prompt = dedent`
+          }
+          // Case 2: Rules separate, files together
+          for (const rule of rules) {
+            const prompt = dedent`
                 ${promptPrefix}
                 <rule>
                 ${rule}
                 </rule>
                 `;
 
-              logger.debug({ message: system });
-              logger.debug({ message: prompt });
+            logger.debug({ message: system });
+            logger.debug({ message: prompt });
 
-              const review = await generateObject({
-                model,
-                schema: z.object({
-                  reviews: PullRequestReviewSchema,
-                }),
-                system,
-                prompt,
-              });
+            const review = await generateObject({
+              model,
+              schema: z.object({
+                reviews: PullRequestReviewSchema,
+              }),
+              system,
+              prompt,
+            });
 
-              reviews.push(...review.object.reviews);
-            }
+            reviews.push(...review.object.reviews);
           }
         } else {
           // Files separate cases
-          for (const file of files) {
+          for (const [i, file] of files.entries()) {
             const filePromptPrefix = dedent`
               Here's the PR context:
               ${pr.prompt}
               
-              <files>
-              <file-context id=${files.indexOf(file)}>
+              <file-context id=${i}>
               ${file.prompt}
               </file-context>
-              </files>
 
               ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
               `;
@@ -299,7 +298,7 @@ export const languageModelService = (
               const prompt = dedent`
                 ${filePromptPrefix}
                 <rules>
-                  ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
+                ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
                 </rules>
                 `;
 
@@ -384,7 +383,6 @@ export const languageModelService = (
             schema: z.object({
               summary: z
                 .string()
-                .optional()
                 .describe(
                   'The summary to be left on the PR as a comment. Keep it short.'
                 ),

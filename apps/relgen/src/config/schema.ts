@@ -87,6 +87,7 @@ export const configSchema = z.object({
               review: z
                 .object({
                   ruleEvalMode: z.enum(['together', 'separate']).optional(),
+                  fileEvalMode: z.enum(['together', 'separate']).optional(),
                   rules: z
                     .array(
                       z.union([
