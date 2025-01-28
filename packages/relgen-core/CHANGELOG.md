@@ -1,5 +1,12 @@
 # @relgen/core
 
+## 0.0.21
+
+### Patch Changes
+
+- ff0aa0f: support full file context in pr reviews
+- ff0aa0f: add a file mode option to pr review to choose whether to combine or separate them into multiple prompts
+
 ## 0.0.20
 
 ### Patch Changes
