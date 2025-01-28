@@ -625,11 +625,16 @@ pr.command('review')
     ] as const)
   )
   .option('-w, --write', 'publish the review')
+  .option(
+    '--excluded-contexts <excluded-contexts>',
+    'which contexts to exclude, for smaller context windows (file-content)',
+    (val) => z.array(z.enum(['file-content'])).parse(val.split(','))
+  )
   .description('review a pull request')
   .action(async (first, second, third, options) => {
     const { owner, repo, num } = parseIssueArgs(first, second, third);
 
-    const { rule, write } = options;
+    const { rule, write, excludedContexts } = options;
 
     const ruleEval =
       options.ruleEval ??
@@ -667,6 +672,7 @@ pr.command('review')
       {
         write,
         ruleEval,
+        excludedContexts,
       }
     );
 
