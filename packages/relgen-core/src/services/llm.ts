@@ -114,7 +114,7 @@ export const languageModelService = (
           }
           case 'leadership': {
             system = dedent`
-            You are a highly product manager tasked with summarizing the latest release for leadership.
+            You are a highly experienced product manager tasked with summarizing the latest release for leadership.
             Use the given context to generate a summary that will be shown to company leadership.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
@@ -201,6 +201,7 @@ export const languageModelService = (
         Make sure to explain each review comment clearly and concisely.
         If no change is needed, do not include a review.
         DO NOT MENTION ISSUES UNRELATED TO THE GIVEN ${ruleEval === 'separate' ? 'RULE' : 'RULES'}.
+        DO NOT REVIEW CHANGES THAT ARE NOT IN A PATCH BLOCK.
         `;
 
         logger.debug(files.length);
@@ -345,6 +346,7 @@ export const languageModelService = (
 
         const summarySystem = dedent`
         You are an expert software engineer tasked with summarizing the reviews for a pull request.
+        Present your findings in the first person, as if you were the author of all the reviews.
         Use the given context to generate a summary that will be added as a comment.
         Keep your output concise and relevant.
         Use proper English grammar and punctuation like a native speaker.
