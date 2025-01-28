@@ -114,7 +114,7 @@ export const languageModelService = (
           }
           case 'leadership': {
             system = dedent`
-            You are a highly product manager tasked with summarizing the latest release for leadership.
+            You are a highly experienced product manager tasked with summarizing the latest release for leadership.
             Use the given context to generate a summary that will be shown to company leadership.
             Use proper English grammar and punctuation like a native speaker.
             Keep your output concise and relevant.
@@ -182,15 +182,12 @@ export const languageModelService = (
         options?: {
           extraInstructions?: string;
           ruleEval?: 'together' | 'separate';
+          fileEval?: 'together' | 'separate';
         }
       ) => {
         const { pr, files, rules } = context;
 
-        let { ruleEval } = options ?? {};
-
-        if (!ruleEval) {
-          ruleEval = 'together';
-        }
+        const { ruleEval = 'separate', fileEval = 'separate' } = options ?? {};
 
         const system = dedent`
         You are an expert software engineer tasked with reviewing a pull request to ensure it follows some given ${ruleEval === 'separate' ? 'rule' : 'rules'}.
@@ -204,9 +201,15 @@ export const languageModelService = (
         Make sure to explain each review comment clearly and concisely.
         If no change is needed, do not include a review.
         DO NOT MENTION ISSUES UNRELATED TO THE GIVEN ${ruleEval === 'separate' ? 'RULE' : 'RULES'}.
+        DO NOT REVIEW CHANGES THAT ARE NOT IN A PATCH BLOCK.
         `;
 
-        const promptPrefix = dedent`
+        logger.debug(files.length);
+
+        const reviews: z.infer<typeof PullRequestReviewSchema> = [];
+
+        if (fileEval === 'together') {
+          const promptPrefix = dedent`
           Here's the PR context:
           ${pr.prompt}
           
@@ -225,64 +228,125 @@ export const languageModelService = (
           ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
           `;
 
-        if (ruleEval === 'together') {
-          const prompt = dedent`
-            ${promptPrefix}
+          if (ruleEval === 'together') {
+            // Case 1: Rules together, files together
+            const prompt = dedent`
+              ${promptPrefix}
+              <rules>
+                ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
+              </rules>
+              `;
 
-            <rules>
-              ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
-            </rules>
-            `;
+            logger.debug({ message: system });
+            logger.debug({ message: prompt });
 
-          logger.debug({ message: system });
-          logger.debug({ message: prompt });
+            const result = await generateObject({
+              model,
+              schema: z.object({
+                summary: z
+                  .string()
+                  .optional()
+                  .describe(
+                    'The summary to be left on the PR as a comment. Keep it short.'
+                  ),
+                reviews: PullRequestReviewSchema,
+              }),
+              system,
+              prompt,
+            });
 
-          const result = await generateObject({
-            model,
-            schema: z.object({
-              summary: z
-                .string()
-                .optional()
-                .describe(
-                  'The summary to be left on the PR as a comment. Keep it short.'
-                ),
-              reviews: PullRequestReviewSchema,
-            }),
-            system,
-            prompt,
-          });
+            return result.object;
+          }
+          // Case 2: Rules separate, files together
+          for (const rule of rules) {
+            const prompt = dedent`
+                ${promptPrefix}
+                <rule>
+                ${rule}
+                </rule>
+                `;
 
-          return result.object;
-        }
+            logger.debug({ message: system });
+            logger.debug({ message: prompt });
 
-        const reviews: z.infer<typeof PullRequestReviewSchema> = [];
+            const review = await generateObject({
+              model,
+              schema: z.object({
+                reviews: PullRequestReviewSchema,
+              }),
+              system,
+              prompt,
+            });
 
-        for (const rule of rules) {
-          const prompt = dedent`
-            ${promptPrefix}
+            reviews.push(...review.object.reviews);
+          }
+        } else {
+          // Files separate cases
+          for (const [i, file] of files.entries()) {
+            const filePromptPrefix = dedent`
+              Here's the PR context:
+              ${pr.prompt}
+              
+              <file-context id=${i}>
+              ${file.prompt}
+              </file-context>
 
-            <rule>
-            ${rule}
-            </rule>
-            `;
+              ${options?.extraInstructions ? `Extra instructions: \n${options.extraInstructions}` : ''}
+              `;
 
-          logger.debug({ message: system });
-          logger.debug({ message: prompt });
+            if (ruleEval === 'together') {
+              // Case 3: Rules together, files separate
+              const prompt = dedent`
+                ${filePromptPrefix}
+                <rules>
+                ${rules.map((rule) => `<rule>\n${rule}\n</rule>`).join('\n')}
+                </rules>
+                `;
 
-          const review = await generateObject({
-            model,
-            schema: z.object({
-              reviews: PullRequestReviewSchema,
-            }),
-            system,
-            prompt,
-          });
+              logger.debug({ message: system });
+              logger.debug({ message: prompt });
 
-          reviews.push(...review.object.reviews);
+              const review = await generateObject({
+                model,
+                schema: z.object({
+                  reviews: PullRequestReviewSchema,
+                }),
+                system,
+                prompt,
+              });
+
+              reviews.push(...review.object.reviews);
+            } else {
+              // Case 4: Rules separate, files separate
+              for (const rule of rules) {
+                const prompt = dedent`
+                  ${filePromptPrefix}
+                  <rule>
+                  ${rule}
+                  </rule>
+                  `;
+
+                logger.debug({ message: system });
+                logger.debug({ message: prompt });
+
+                const review = await generateObject({
+                  model,
+                  schema: z.object({
+                    reviews: PullRequestReviewSchema,
+                  }),
+                  system,
+                  prompt,
+                });
+
+                reviews.push(...review.object.reviews);
+              }
+            }
+          }
         }
 
         const summarySystem = dedent`
         You are an expert software engineer tasked with summarizing the reviews for a pull request.
+        Present your findings in the first person, as if you were the author of all the reviews.
         Use the given context to generate a summary that will be added as a comment.
         Keep your output concise and relevant.
         Use proper English grammar and punctuation like a native speaker.
@@ -321,7 +385,6 @@ export const languageModelService = (
             schema: z.object({
               summary: z
                 .string()
-                .optional()
                 .describe(
                   'The summary to be left on the PR as a comment. Keep it short.'
                 ),

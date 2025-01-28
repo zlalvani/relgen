@@ -14,6 +14,8 @@ import type {
 } from '../../llm';
 import type { RemoteWriteService } from './types';
 
+const REVIEW_TAG = '<!-- Reviewed by Relgen -->';
+
 export const githubWriteService = (
   github: GithubClient,
   logger: pino.Logger
@@ -23,12 +25,14 @@ export const githubWriteService = (
       review: async ({
         context,
         generated,
+        footer,
       }: {
         context: {
           pr: GithubPullRequestContext;
           files: GithubPullRequestFileContext[];
         };
         generated: GeneratedPullRequestReview;
+        footer?: string;
       }) => {
         logger.debug({
           object: generated,
@@ -122,15 +126,22 @@ export const githubWriteService = (
           comments,
         });
 
+        const body = [
+          generated.reviews.length > 0
+            ? (generated.summary ?? 'Some notes')
+            : 'LGTM',
+          footer,
+          REVIEW_TAG,
+        ]
+          .filter((content) => content)
+          .join('\n\n');
+
         return await github.$rest.pulls.createReview({
           owner: context.pr.data.owner,
           repo: context.pr.data.repo,
           pull_number: context.pr.data.num,
           event: 'COMMENT',
-          body:
-            comments.length > 0
-              ? (generated.summary ?? 'Reviewed by Relgen')
-              : 'LGTM',
+          body,
           comments,
         });
       },
