@@ -9,6 +9,7 @@ import kleur from 'kleur';
 import pino from 'pino';
 import { dedent, parallel, toInt } from 'radashi';
 import { z } from 'zod';
+import { createSubProcessClient } from './clients/subprocess';
 import {
   type Config,
   anthropicModelChoices,
@@ -158,10 +159,13 @@ const remote = cli
 
     const { provider, model, llmToken, logger } = resolvedOpts;
 
+    const subprocess = createSubProcessClient();
+
     githubToken =
       githubToken ||
       process.env.GITHUB_TOKEN ||
       configFile?.integrations?.github?.token ||
+      subprocess.exec('gh auth token') ||
       (await password({
         message: 'Enter GitHub token',
       }));
