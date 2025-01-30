@@ -3,23 +3,45 @@ If a new module is introduced that has dependencies on other modules (internal o
 Example:
 
 ```typescript
-import { Gitlab } from '@gitbeaker/rest';
+import { Octokit, RequestError } from 'octokit';
 
-export const gitlabClient = (gitlab: InstanceType<typeof Gitlab>) => {
+export const githubClient = (octo: Octokit) => {
   return {
-    doSomething: async (input: string) => {
-      return await Promise.resolve({})
-    }
+    $rest: octo.rest as Octokit['rest'],
+    rest: {
+      users: {
+        getAuthenticated: async () => {
+          const result = await tryit(() =>
+            octo.rest.users.getAuthenticated()
+          )();
+
+          if (!success(result)) {
+            const [error] = result;
+            if (error instanceof RequestError && error.status === 403) {
+              return null;
+            }
+            throw error;
+          }
+
+          const [_, response] = result;
+          return response;
+        },
+      },
+    },
   };
 };
 
-export const createGitlabClient = (token: string) => {
-  return gitlabClient(
-    new Gitlab({
-      token,
-    })
-  );
+export const createGithubClient = ({
+  token,
+}: {
+  token: string;
+}) => {
+  return githubClient(new Octokit({ auth: token }));
 };
+```
 
-export type GitlabClient = ReturnType<typeof gitlabClient>;
+Usage: 
+
+```typescript
+const github = createGithubClient({ token: 'my-token' });
 ```
