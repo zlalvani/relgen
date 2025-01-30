@@ -1,5 +1,11 @@
 # relgen
 
+## 0.0.26
+
+### Patch Changes
+
+- 66865a6: support fetching github token from gh cli
+
 ## 0.0.25
 
 ### Patch Changes
