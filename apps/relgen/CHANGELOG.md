@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.27
+
+### Patch Changes
+
+- 1207710: add support for o3-mini
+- Updated dependencies [1207710]
+  - @relgen/core@0.0.22
+
 ## 0.0.26
 
 ### Patch Changes
