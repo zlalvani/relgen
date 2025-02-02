@@ -572,8 +572,8 @@ export const githubContextService = (
             }
 
             const retrieved = await github.$rest.repos.getContent({
-              owner,
-              repo,
+              owner: pull.data.head.repo.owner.login,
+              repo: pull.data.head.repo.name,
               path: file.filename,
               ref: pull.data.head.ref,
             });
