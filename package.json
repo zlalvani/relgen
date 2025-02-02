@@ -11,17 +11,17 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@changesets/cli": "^2.27.11",
+    "@changesets/cli": "^2.27.12",
     "@repo/typescript-config": "workspace:*",
     "dotenv-cli": "^7.4.4",
     "turbo": "latest",
-    "ultracite": "^4.1.14"
+    "ultracite": "^4.1.18"
   },
   "packageManager": "pnpm@9.0.6",
   "engines": {
     "node": ">=21"
   },
   "dependencies": {
-    "semver": "^7.6.0"
+    "semver": "^7.7.0"
   }
 }

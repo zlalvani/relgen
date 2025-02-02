@@ -4,6 +4,7 @@ export const providerChoices = ['openai', 'anthropic', 'deepseek'] as const;
 export const openaiModelChoices = [
   'o1-preview',
   'o1-mini',
+  'o3-mini',
   'gpt-4o',
   'gpt-4o-2024-05-13',
   'gpt-4o-2024-08-06',
