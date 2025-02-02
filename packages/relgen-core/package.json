@@ -16,25 +16,25 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.1.2",
-    "@ai-sdk/deepseek": "^0.1.2",
-    "@ai-sdk/openai": "^1.1.2",
+    "@ai-sdk/anthropic": "^1.1.6",
+    "@ai-sdk/deepseek": "^0.1.8",
+    "@ai-sdk/openai": "^1.1.9",
     "@gitbeaker/rest": "^42.1.0",
     "@linear/sdk": "^38.0.0",
     "@octokit/types": "^13.7.0",
-    "ai": "^4.1.2",
+    "ai": "^4.1.16",
     "fuse.js": "^7.0.0",
     "gitdiff-parser": "^0.3.1",
     "octokit": "^4.1.0",
     "pino": "^9.6.0",
-    "radashi": "^12.3.3",
+    "radashi": "^12.3.4",
     "simple-git": "^3.27.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^22.10.10",
-    "tsup": "^8.3.5",
+    "@types/node": "^22.13.0",
+    "tsup": "^8.3.6",
     "type-fest": "^4.33.0",
     "typescript": "^5.7.3"
   }
