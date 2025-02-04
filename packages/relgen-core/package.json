@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --minify",
     "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --clean",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval:dev": "evalite watch"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.6",
@@ -34,8 +35,11 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.13.0",
+    "autoevals": "^0.0.119",
+    "evalite": "^0.8.3",
     "tsup": "^8.3.6",
     "type-fest": "^4.33.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
   }
 }
