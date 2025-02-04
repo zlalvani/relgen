@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.23
+
+### Patch Changes
+
+- 11d6e93: fixed 404 when retrieving pr context for prs across repos
+
 ## 0.0.22
 
 ### Patch Changes
