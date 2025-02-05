@@ -16,7 +16,7 @@ const providers = [
   },
 ] as const;
 
-export const parameterizedEval = <TInput, TExpected = TInput>(
+export const parameterizedEval = async <TInput, TExpected = TInput>(
   makeName: (
     provider: (typeof providers)[number]['name'],
     model: string
@@ -27,13 +27,14 @@ export const parameterizedEval = <TInput, TExpected = TInput>(
     model: string
   ) => Omit<Evalite.RunnerOpts<TInput, TExpected>, 'data'>
 ) => {
+  const dataResult = await data();
   for (const provider of providers.filter(
     (provider) => config[provider.name].apiKey
   )) {
     for (const model of provider.models) {
       evalite<TInput, TExpected>(makeName(provider.name, model), {
         ...makeOptions(provider.name, model),
-        data,
+        data: () => dataResult,
       });
     }
   }

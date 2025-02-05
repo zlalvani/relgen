@@ -7,7 +7,7 @@ import { parameterizedEval } from '../parameterize';
 
 const logger = pino();
 
-parameterizedEval(
+await parameterizedEval(
   (provider, model) => `Review PR (${provider} ${model})`,
   () => {
     // TODO: replace octokit with a stubbed version that uses fixtures

@@ -14,7 +14,8 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --minify",
     "dev": "tsup src/index.ts --format esm --dts --watch --sourcemap --clean",
     "typecheck": "tsc --noEmit",
-    "eval:dev": "evalite watch"
+    "eval:dev": "pnpm with-env evalite watch",
+    "with-env": "dotenv -e ../../.env -c --"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.1.6",

@@ -3,7 +3,7 @@ import pino from 'pino';
 import { createLanguageModelService } from '../../services/llm';
 import { parameterizedEval } from '../parameterize';
 
-parameterizedEval(
+await parameterizedEval(
   (provider, model) => `Describe PR (${provider} ${model})`,
   () => {
     return [
