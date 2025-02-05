@@ -1,9 +1,5 @@
 import { type Evalite, evalite } from 'evalite';
-
-type RunnerOptsFactory<TInput, TExpected> = (
-  provider: (typeof providers)[number]['name'],
-  model: string
-) => Evalite.RunnerOpts<TInput, TExpected>;
+import { config } from './config';
 
 const providers = [
   {
@@ -29,39 +25,16 @@ export const parameterizedEval = <TInput, TExpected = TInput>(
   makeOptions: (
     provider: (typeof providers)[number]['name'],
     model: string
-  ) => Evalite.RunnerOpts<TInput, TExpected>
+  ) => Omit<Evalite.RunnerOpts<TInput, TExpected>, 'data'>
 ) => {
-  for (const provider of providers) {
+  for (const provider of providers.filter(
+    (provider) => config[provider.name].apiKey
+  )) {
     for (const model of provider.models) {
-      evalite<TInput, TExpected>(
-        makeName(provider.name, model),
-        makeOptions(provider.name, model)
-      );
+      evalite<TInput, TExpected>(makeName(provider.name, model), {
+        ...makeOptions(provider.name, model),
+        data,
+      });
     }
   }
 };
-
-// export function parameterizedEval<R extends Evalite.RunnerOpts<unknown, unknown>>(
-//   makeName: (
-//     provider: (typeof providers)[number]['name'],
-//     model: string
-//   ) => string,
-//   // Notice that makeOptions is now a generic callback that returns R.
-//   makeOptions: (
-//     provider: (typeof providers)[number]['name'],
-//     model: string
-//   ) => R
-// ) {
-//   // Here we extract the types from R.
-//   type TInput = R extends Evalite.RunnerOpts<infer I, unknown> ? I : never;
-//   type TExpected = R extends Evalite.RunnerOpts<unknown, infer E> ? E : never;
-
-//   for (const provider of providers) {
-//     for (const model of provider.models) {
-//       evalite<TInput, TExpected>(
-//         makeName(provider.name, model),
-//         makeOptions(provider.name, model)
-//       );
-//     }
-//   }
-// }

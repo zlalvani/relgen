@@ -73,11 +73,11 @@ export const languageModelService = (
         context: {
           changes: {
             pr: PullRequestContext;
-            labels: LabelContext[];
+            labels: readonly LabelContext[];
             issue?: IssueContext;
             ticket?: TicketContext;
           }[];
-          tickets?: TicketContext[];
+          tickets?: readonly TicketContext[];
         },
         options?: {
           persona?: 'marketing' | 'engineering' | 'product' | 'leadership';
@@ -176,8 +176,8 @@ export const languageModelService = (
       review: async (
         context: {
           pr: PullRequestContext;
-          files: PullRequestFileContext[];
-          rules: string[];
+          files: readonly PullRequestFileContext[];
+          rules: readonly string[];
         },
         options?: {
           extraInstructions?: string;

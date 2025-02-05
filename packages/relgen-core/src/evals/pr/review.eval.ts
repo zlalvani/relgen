@@ -1,11 +1,20 @@
 import { Levenshtein } from 'autoevals';
 import pino from 'pino';
+import { createGithubClient } from '../../clients/github';
+import { githubContextService } from '../../services/context/remote/github';
 import { createLanguageModelService } from '../../services/llm';
 import { parameterizedEval } from '../parameterize';
+
+const logger = pino();
 
 parameterizedEval(
   (provider, model) => `Review PR (${provider} ${model})`,
   () => {
+    // TODO: replace octokit with a stubbed version that uses fixtures
+    const gh = createGithubClient({ token: '' });
+
+    const context = githubContextService(gh, logger);
+
     return [
       {
         input: {
@@ -23,18 +32,6 @@ parameterizedEval(
   },
   (provider, model) => {
     return {
-      // A function that returns an array of test data
-      // - TODO: Replace with your test data
-      // data: () => {
-      //   return [
-      //     {
-      //       input: {} as Parameters<
-      //         ReturnType<typeof createLanguageModelService>['pr']['review']
-      //       >,
-      //       expected: 'Hello World!',
-      //     },
-      //   ] as const;
-      // },
       // The task to perform
       // - TODO: Replace with your LLM call
       task: (input) => {
@@ -44,7 +41,7 @@ parameterizedEval(
             model,
             apiKey: '',
           },
-          pino()
+          logger
         );
 
         llm.pr.review(input);
