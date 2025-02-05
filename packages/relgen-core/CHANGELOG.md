@@ -1,5 +1,11 @@
 # @relgen/core
 
+## 0.0.24
+
+### Patch Changes
+
+- 38d74ff: fixed blacklisted files not being excluded in pr review
+
 ## 0.0.23
 
 ### Patch Changes
