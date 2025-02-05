@@ -532,6 +532,7 @@ const relgen = ({
                 fileContent:
                   options?.excludedContexts?.includes('file-content'),
               },
+              excludedFiles,
             }),
           ]);
 
