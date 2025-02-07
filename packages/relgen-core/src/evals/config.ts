@@ -5,7 +5,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string(),
   ANTHROPIC_API_KEY: z.string(),
   DEEPSEEK_API_KEY: z.string(),
-  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).optional(),
 });
 
 const env = envSchema.parse(process.env);
@@ -24,6 +24,6 @@ export const config = {
     apiKey: env.DEEPSEEK_API_KEY,
   },
   logger: {
-    level: env.LOG_LEVEL,
+    level: env.LOG_LEVEL ?? 'info',
   },
 };
