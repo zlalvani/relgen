@@ -16,14 +16,14 @@ const providers = [
     name: 'openai',
     models: ['gpt-4o-mini', 'o3-mini'],
   },
-  // {
-  //   name: 'anthropic',
-  //   models: ['claude-3-5-sonnet-latest'],
-  // },
-  // {
-  //   name: 'deepseek',
-  //   models: ['deepseek-chat'],
-  // },
+  {
+    name: 'anthropic',
+    models: ['claude-3-5-sonnet-latest'],
+  },
+  {
+    name: 'deepseek',
+    models: ['deepseek-chat'],
+  },
 ] as const;
 
 type Dependencies = {
@@ -36,10 +36,9 @@ export const parameterizedEval = async <TInput, TExpected = TInput>(
     provider: (typeof providers)[number]['name'];
     model: string;
   }) => string,
-  makeData: (args: { deps: Omit<Dependencies, 'llm'> }) => Evalite.RunnerOpts<
-    TInput,
-    TExpected
-  >['data'],
+  makeData: (args: { deps: Omit<Dependencies, 'llm'> }) => ReturnType<
+    Evalite.RunnerOpts<TInput, TExpected>['data']
+  >,
   makeEvaliteOpts: (args: {
     provider: (typeof providers)[number]['name'];
     model: string;
@@ -55,7 +54,7 @@ export const parameterizedEval = async <TInput, TExpected = TInput>(
     deps: {
       context,
     },
-  })();
+  });
 
   for (const provider of providers.filter(
     (provider) => config[provider.name].apiKey
