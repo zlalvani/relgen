@@ -204,8 +204,6 @@ export const languageModelService = (
         DO NOT REVIEW CHANGES THAT ARE NOT IN A PATCH BLOCK.
         `;
 
-        logger.debug(files.length);
-
         const reviews: z.infer<typeof PullRequestReviewSchema> = [];
 
         if (fileEval === 'together') {

@@ -2,9 +2,10 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   GITHUB_TOKEN: z.string(),
-  OPENAI_API_KEY: z.string().optional(),
-  ANTHROPIC_API_KEY: z.string().optional(),
-  DEEPSEEK_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string(),
+  ANTHROPIC_API_KEY: z.string(),
+  DEEPSEEK_API_KEY: z.string(),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']),
 });
 
 const env = envSchema.parse(process.env);
@@ -21,5 +22,8 @@ export const config = {
   },
   deepseek: {
     apiKey: env.DEEPSEEK_API_KEY,
+  },
+  logger: {
+    level: env.LOG_LEVEL,
   },
 };
