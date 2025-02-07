@@ -3,7 +3,7 @@ import { parameterizedEval } from '../parameterize';
 
 await parameterizedEval(
   ({ provider, model }) => `Describe PR (${provider} ${model})`,
-  () => () => {
+  () => {
     return [
       {
         input: 'hi',
