@@ -50,8 +50,6 @@ export const githubWriteService = (
               return null;
             }
 
-            diffHunk.data.patch;
-
             if (!diffHunk.data.patch) {
               logger.warn({
                 message: 'Could not find patch for review',
