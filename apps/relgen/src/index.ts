@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, writeFile } from 'node:fs/promises';
 import { URL } from 'node:url';
-import { Option, program } from '@commander-js/extra-typings';
+import { type Command, Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
 import { type Relgen, createRelgen } from '@relgen/core';
 import * as chrono from 'chrono-node/en';
@@ -30,13 +30,16 @@ let resolvedOpts: {
     | (typeof deepseekModelChoices)[number];
   llmToken: string;
   logger?: pino.Logger;
+  json?: boolean;
+  silent?: boolean;
+  verbose?: boolean;
 };
 
 let configFile: Config | undefined;
 
 const output = <T extends object>(obj: T, serialize?: (obj: T) => string) => {
-  if (!cli.opts().silent) {
-    if (cli.opts().json) {
+  if (!resolvedOpts.silent) {
+    if (resolvedOpts.json) {
       console.log(JSON.stringify(obj));
     } else {
       console.log(serialize ? serialize(obj) : obj);
@@ -44,118 +47,193 @@ const output = <T extends object>(obj: T, serialize?: (obj: T) => string) => {
   }
 };
 
-const cli = program
-  .name('relgen')
-  .option('-t, --llm-token <token>', 'llm token')
-  .option('-s, --silent', 'do not print output')
-  .option('-c, --config <config>', 'config file')
-  .option('--json', 'output as json')
-  .addOption(
-    new Option('-v, --verbose', 'verbose output (debug statements)').conflicts(
-      'silent'
-    )
-  )
-  .addOption(
-    new Option('-p, --provider <provider>', 'llm provider').choices(
-      providerChoices
-    )
-  )
-  .addOption(
-    new Option('-m, --model <model>', 'llm model').choices([
-      ...openaiModelChoices,
-      ...anthropicModelChoices,
-      ...deepseekModelChoices,
-    ])
-  )
-  .hook('preAction', async () => {
-    let { llmToken, provider, model, verbose, config } = cli.opts();
-
-    if (!config) {
-      try {
-        await access('.relgen.json');
-        config = '.relgen.json';
-      } catch {
-        // ignore
-      }
+program
+  .command('init')
+  .description('create a .relgen.json file')
+  .action(async () => {
+    try {
+      await access('.relgen.json');
+      output({}, () => kleur.red('.relgen.json already exists'));
+    } catch {
+      // ignore
     }
 
-    if (config) {
-      configFile = configSchema.parse(
-        JSON.parse((await readFile(config, 'utf-8')).trim())
-      );
-    }
+    const provider = await select({
+      message: 'Select LLM provider',
+      choices: providerChoices.map((provider) => ({
+        value: provider,
+        name: provider,
+      })),
+    });
 
-    provider =
-      provider ||
-      configFile?.llm?.provider ||
-      (await select({
-        message: 'Select LLM provider',
-        choices: providerChoices.map((provider) => ({
-          value: provider,
-          name: provider,
-        })),
-      }));
+    const model = await select({
+      message: 'Select LLM model',
+      choices: providerModels[provider].map((model) => ({
+        value: model,
+        name: model,
+      })),
+    });
 
-    model =
-      model ||
-      configFile?.llm?.model ||
-      (await select({
-        message: 'Select LLM model',
-        choices: providerModels[provider].map((model) => ({
-          value: model,
-          name: model,
-        })),
-      }));
+    const apiKey = await password({
+      message: 'Enter LLM token (leave empty to skip)',
+    });
 
-    llmToken =
-      llmToken ||
-      (provider === 'openai' && process.env.OPENAI_API_KEY) ||
-      (provider === 'anthropic' && process.env.ANTHROPIC_API_KEY) ||
-      (provider === 'deepseek' && process.env.DEEPSEEK_API_KEY) ||
-      configFile?.llm?.apiKey ||
-      (await password({
-        message: 'Enter LLM token',
-      }));
+    const githubToken = await password({
+      message: 'Enter GitHub token (leave empty to skip)',
+    });
 
-    resolvedOpts = {
+    const llm = {
       provider,
       model,
-      llmToken,
-      logger: verbose
-        ? pino({
-            level: 'debug',
-            transport: {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                messageKey: 'message',
-              },
+      apiKey: apiKey || undefined,
+    } as
+      | {
+          provider: 'openai';
+          model: (typeof openaiModelChoices)[number];
+          apiKey?: string;
+        }
+      | {
+          provider: 'anthropic';
+          model: (typeof anthropicModelChoices)[number];
+          apiKey?: string;
+        }
+      | {
+          provider: 'deepseek';
+          model: (typeof deepseekModelChoices)[number];
+          apiKey?: string;
+        };
+
+    const config: Config = {
+      llm,
+      integrations: githubToken
+        ? {
+            github: {
+              token: githubToken,
             },
-          })
+          }
         : undefined,
     };
 
-    relgen = createRelgen({
-      llm: {
-        apiKey: llmToken,
-        provider,
-        model,
-      },
-      logger: resolvedOpts.logger,
-      integrations: {
-        github: {
-          token: '', // TODO: don't require github token
-        },
-      },
-    });
+    await writeFile('.relgen.json', JSON.stringify(config, null, 2));
   });
 
-const remote = cli
-  .command('remote')
+const applyBaseCommandOpts = (cmd: Command) => {
+  return cmd
+    .option('-t, --llm-token <token>', 'llm token')
+    .option('-s, --silent', 'do not print output')
+    .option('-c, --config <config>', 'config file')
+    .option('--json', 'output as json')
+    .addOption(
+      new Option(
+        '-v, --verbose',
+        'verbose output (debug statements)'
+      ).conflicts('silent')
+    )
+    .addOption(
+      new Option('-p, --provider <provider>', 'llm provider').choices(
+        providerChoices
+      )
+    )
+    .addOption(
+      new Option('-m, --model <model>', 'llm model').choices([
+        ...openaiModelChoices,
+        ...anthropicModelChoices,
+        ...deepseekModelChoices,
+      ])
+    )
+    .hook('preAction', async (cmd) => {
+      let { llmToken, provider, model, verbose, config, json, silent } =
+        cmd.opts();
+
+      if (!config) {
+        try {
+          await access('.relgen.json');
+          config = '.relgen.json';
+        } catch {
+          // ignore
+        }
+      }
+
+      if (config) {
+        configFile = configSchema.parse(
+          JSON.parse((await readFile(config, 'utf-8')).trim())
+        );
+      }
+
+      provider =
+        provider ||
+        configFile?.llm?.provider ||
+        (await select({
+          message: 'Select LLM provider',
+          choices: providerChoices.map((provider) => ({
+            value: provider,
+            name: provider,
+          })),
+        }));
+
+      model =
+        model ||
+        configFile?.llm?.model ||
+        (await select({
+          message: 'Select LLM model',
+          choices: providerModels[provider].map((model) => ({
+            value: model,
+            name: model,
+          })),
+        }));
+
+      llmToken =
+        llmToken ||
+        (provider === 'openai' && process.env.OPENAI_API_KEY) ||
+        (provider === 'anthropic' && process.env.ANTHROPIC_API_KEY) ||
+        (provider === 'deepseek' && process.env.DEEPSEEK_API_KEY) ||
+        configFile?.llm?.apiKey ||
+        (await password({
+          message: 'Enter LLM token',
+        }));
+
+      resolvedOpts = {
+        provider,
+        model,
+        llmToken,
+        logger: verbose
+          ? pino({
+              level: 'debug',
+              transport: {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  messageKey: 'message',
+                },
+              },
+            })
+          : undefined,
+        json,
+        silent,
+        verbose,
+      };
+
+      relgen = createRelgen({
+        llm: {
+          apiKey: llmToken,
+          provider,
+          model,
+        },
+        logger: resolvedOpts.logger,
+        integrations: {
+          github: {
+            token: '', // TODO: don't require github token
+          },
+        },
+      });
+    });
+};
+
+const remote = applyBaseCommandOpts(program.command('remote'))
   .option('-g, --github <token>', 'github token')
   .description('tasks relating to the code hosting platform')
-  .hook('preAction', async () => {
-    let { github: githubToken } = remote.opts();
+  .hook('preAction', async (cmd) => {
+    let { github: githubToken } = cmd.opts();
 
     const { provider, model, llmToken, logger } = resolvedOpts;
 
@@ -709,4 +787,4 @@ pr.command('review')
     });
   });
 
-await cli.parseAsync();
+await program.parseAsync();
