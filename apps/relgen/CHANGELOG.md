@@ -1,5 +1,11 @@
 # relgen
 
+## 0.0.30
+
+### Patch Changes
+
+- 870c273: add relgen init command to create a config file
+
 ## 0.0.29
 
 ### Patch Changes
