@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { access, readFile } from 'node:fs/promises';
 import { URL } from 'node:url';
-import { Option, program } from '@commander-js/extra-typings';
+import { Command, Option, program } from '@commander-js/extra-typings';
 import { password, select } from '@inquirer/prompts';
 import { type Relgen, createRelgen } from '@relgen/core';
 import * as chrono from 'chrono-node/en';
@@ -35,8 +35,8 @@ let resolvedOpts: {
 let configFile: Config | undefined;
 
 const output = <T extends object>(obj: T, serialize?: (obj: T) => string) => {
-  if (!cli.opts().silent) {
-    if (cli.opts().json) {
+  if (!baseCommand.opts().silent) {
+    if (baseCommand.opts().json) {
       console.log(JSON.stringify(obj));
     } else {
       console.log(serialize ? serialize(obj) : obj);
@@ -44,7 +44,36 @@ const output = <T extends object>(obj: T, serialize?: (obj: T) => string) => {
   }
 };
 
-const cli = program
+const init = program
+  .command('init')
+  .description('create a .relgen.json file')
+  .action(async () => {
+    const provider = await select({
+      message: 'Select LLM provider',
+      choices: providerChoices.map((provider) => ({
+        value: provider,
+        name: provider,
+      })),
+    });
+
+    const model = await select({
+      message: 'Select LLM model',
+      choices: providerModels[provider].map((model) => ({
+        value: model,
+        name: model,
+      })),
+    });
+
+    const apiKey = await password({
+      message: 'Enter LLM token (leave empty to skip)',
+    });
+
+    const githubToken = await password({
+      message: 'Enter GitHub token (leave empty to skip)',
+    });
+  });
+
+const baseCommand = new Command()
   .name('relgen')
   .option('-t, --llm-token <token>', 'llm token')
   .option('-s, --silent', 'do not print output')
@@ -67,8 +96,8 @@ const cli = program
       ...deepseekModelChoices,
     ])
   )
-  .hook('preAction', async () => {
-    let { llmToken, provider, model, verbose, config } = cli.opts();
+  .hook('preAction', async (cmd) => {
+    let { llmToken, provider, model, verbose, config } = cmd.opts();
 
     if (!config) {
       try {
@@ -150,12 +179,13 @@ const cli = program
     });
   });
 
-const remote = cli
+const remote = program
+  .copyInheritedSettings(baseCommand)
   .command('remote')
   .option('-g, --github <token>', 'github token')
   .description('tasks relating to the code hosting platform')
-  .hook('preAction', async () => {
-    let { github: githubToken } = remote.opts();
+  .hook('preAction', async (cmd) => {
+    let { github: githubToken } = cmd.opts();
 
     const { provider, model, llmToken, logger } = resolvedOpts;
 
@@ -511,6 +541,7 @@ release
 const pr = remote.command('pr').description('tasks related to pull requests');
 
 pr.command('describe')
+  .copyInheritedSettings(baseCommand)
   .argument('<owner>', 'issue URL or owner/repo or owner')
   .argument('[repo]', 'repository or PR number')
   .argument('[number]', 'PR number', (val) => toInt(val, undefined))
@@ -709,4 +740,4 @@ pr.command('review')
     });
   });
 
-await cli.parseAsync();
+await program.parseAsync();
