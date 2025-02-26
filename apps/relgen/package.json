@@ -1,6 +1,6 @@
 {
   "name": "relgen",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "scripts": {
     "launch": "pnpm with-env node dist/index.mjs",
     "debug": "pnpm with-env node --inspect=9229 dist/index.mjs",
@@ -30,7 +30,9 @@
     "radashi": "^12.3.3",
     "zod": "^3.24.1"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.10",
