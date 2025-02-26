@@ -6,7 +6,7 @@
     "debug": "pnpm with-env node --inspect=9229 dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
     "dev": "tsup src/index.ts --format esm --watch ./src --sourcemap --clean",
-    "update-schema": "bun src/scripts/generate-json-schema.ts",
+    "update-schema": "bun src/scripts/generate-json-schema.ts > ../../relgen-config-schema.json",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env -c --"
   },
