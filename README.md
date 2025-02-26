@@ -112,7 +112,7 @@ Create a `.relgen.json` in your project root:
 }
 ```
 
-See the [JSON schema](https://github.com/zlalvani/relgen/blob/main/relgen-config-schema.json) for all config options.
+See the [JSON schema](https://github.com/zlalvani/relgen/blob/main/relgen-config-schema.json) for all config options. You can view an example configuration for this project [here](https://github.com/zlalvani/relgen/blob/main/apps/relgen/examples/.relgen.json). 
 
 ## Github Action
 
