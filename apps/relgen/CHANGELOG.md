@@ -1,5 +1,13 @@
 # relgen
 
+## 0.0.31
+
+### Patch Changes
+
+- c4106a8: added excludedFilePatterns config option for pr review and describe
+- Updated dependencies [c4106a8]
+  - @relgen/core@0.0.25
+
 ## 0.0.30
 
 ### Patch Changes
