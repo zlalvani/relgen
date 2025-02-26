@@ -1,0 +1,212 @@
+{
+  "type": "object",
+  "properties": {
+    "llm": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "openai"
+            },
+            "model": {
+              "type": "string",
+              "enum": [
+                "o1-preview",
+                "o1-mini",
+                "o3-mini",
+                "gpt-4o",
+                "gpt-4o-2024-05-13",
+                "gpt-4o-2024-08-06",
+                "gpt-4o-2024-11-20",
+                "gpt-4o-audio-preview",
+                "gpt-4o-audio-preview-2024-10-01",
+                "gpt-4o-mini"
+              ]
+            },
+            "apiKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "model"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "anthropic"
+            },
+            "model": {
+              "type": "string",
+              "enum": [
+                "claude-3-5-sonnet-latest",
+                "claude-3-5-sonnet-20241022",
+                "claude-3-5-sonnet-20240620",
+                "claude-3-5-haiku-latest",
+                "claude-3-5-haiku-20241022",
+                "claude-3-opus-latest",
+                "claude-3-opus-20240229",
+                "claude-3-sonnet-20240229",
+                "claude-3-haiku-20240307"
+              ]
+            },
+            "apiKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "model"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "deepseek"
+            },
+            "model": {
+              "type": "string",
+              "enum": [
+                "deepseek-chat",
+                "deepseek-reasoner"
+              ]
+            },
+            "apiKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "provider",
+            "model"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "integrations": {
+      "type": "object",
+      "properties": {
+        "github": {
+          "type": "object",
+          "properties": {
+            "token": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "token"
+          ],
+          "additionalProperties": false
+        },
+        "linear": {
+          "type": "object",
+          "properties": {
+            "token": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "token"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "commands": {
+      "type": "object",
+      "properties": {
+        "remote": {
+          "type": "object",
+          "properties": {
+            "pr": {
+              "type": "object",
+              "properties": {
+                "describe": {
+                  "type": "object",
+                  "properties": {
+                    "template": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "file": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "file"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "prompt": {
+                      "$ref": "#/properties/commands/properties/remote/properties/pr/properties/describe/properties/template"
+                    },
+                    "excludedFilePatterns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "review": {
+                  "type": "object",
+                  "properties": {
+                    "ruleEvalMode": {
+                      "type": "string",
+                      "enum": [
+                        "together",
+                        "separate"
+                      ]
+                    },
+                    "fileEvalMode": {
+                      "type": "string",
+                      "enum": [
+                        "together",
+                        "separate"
+                      ]
+                    },
+                    "excludedFilePatterns": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/properties/commands/properties/remote/properties/pr/properties/describe/properties/excludedFilePatterns/items"
+                      }
+                    },
+                    "rules": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/properties/commands/properties/remote/properties/pr/properties/describe/properties/template"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

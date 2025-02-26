@@ -6,6 +6,7 @@
     "debug": "pnpm with-env node --inspect=9229 dist/index.mjs",
     "build": "tsup src/index.ts --format esm --clean --minify",
     "dev": "tsup src/index.ts --format esm --watch ./src --sourcemap --clean",
+    "update-schema": "bun src/scripts/generate-json-schema.ts",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../.env -c --"
   },
@@ -29,13 +30,12 @@
     "radashi": "^12.3.3",
     "zod": "^3.24.1"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^22.10.10",
     "tsup": "^8.3.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "zod-to-json-schema": "^3.24.3"
   }
 }
