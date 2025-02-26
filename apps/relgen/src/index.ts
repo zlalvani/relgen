@@ -613,22 +613,23 @@ pr.command('describe')
 
     const {
       write,
-      template: templateFile,
-      prompt: promptFile,
+      template: templateOption,
+      prompt: promptOption,
       footer,
       excludedContexts,
     } = options;
 
-    let template: string | undefined;
-    let prompt: string | undefined;
+    const excludedFilePatterns =
+      configFile?.commands?.remote?.pr?.describe?.excludedFilePatterns;
 
-    if (templateFile) {
-      template = (await readFile(templateFile, 'utf-8')).trim();
-    }
+    const templateConfig = configFile?.commands?.remote?.pr?.describe?.template;
+    const promptConfig = configFile?.commands?.remote?.pr?.describe?.prompt;
 
-    if (promptFile) {
-      prompt = (await readFile(promptFile, 'utf-8')).trim();
-    }
+    // Provided options always override config
+    const resolvedTemplate =
+      (templateOption ? { file: templateOption } : undefined) ?? templateConfig;
+    const resolvedPrompt =
+      (promptOption ? { file: promptOption } : undefined) ?? promptConfig;
 
     const result = await relgen.remote.pr.describe(
       {
@@ -638,10 +639,17 @@ pr.command('describe')
       },
       {
         write,
-        template,
-        prompt,
+        template:
+          typeof resolvedTemplate === 'object'
+            ? (await readFile(resolvedTemplate.file, 'utf-8')).trim()
+            : resolvedTemplate,
+        prompt:
+          typeof resolvedPrompt === 'object'
+            ? (await readFile(resolvedPrompt.file, 'utf-8')).trim()
+            : resolvedPrompt,
         footer,
         excludedContexts,
+        excludedFilePatterns,
       }
     );
 
@@ -747,6 +755,9 @@ pr.command('review')
         )
       : [];
 
+    const excludedFilePatterns =
+      configFile?.commands?.remote?.pr?.describe?.excludedFilePatterns;
+
     const ruleFiles = options.ruleFile
       ? await parallel(10, options.ruleFile, async (file) =>
           (await readFile(file, 'utf-8')).trim()
@@ -768,6 +779,7 @@ pr.command('review')
         fileEval,
         footer,
         excludedContexts,
+        excludedFilePatterns,
       }
     );
 

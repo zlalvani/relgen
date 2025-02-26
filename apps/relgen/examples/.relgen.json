@@ -15,9 +15,13 @@
   "commands": {
     "remote": {
       "pr": {
+        "describe": {
+          "excludedFilePatterns": ["**/pnpm-lock.yaml"]
+        },
         "review": {
           "ruleEvalMode": "separate",
           "fileEvalMode": "separate",
+          "excludedFilePatterns": ["**/pnpm-lock.yaml"],
           "rules": [
             { "file": "apps/relgen/examples/rules/injectable.md" },
             { "file": "apps/relgen/examples/rules/typos.md" }

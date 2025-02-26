@@ -1,3 +1,4 @@
+import { Minimatch } from 'minimatch';
 import { z } from 'zod';
 
 export const providerChoices = ['openai', 'anthropic', 'deepseek'] as const;
@@ -45,6 +46,16 @@ function unionOfLiterals<T extends string | number>(constants: readonly T[]) {
   return z.union(literals);
 }
 
+const globSchema = z
+  .string()
+  .transform((val) => new Minimatch(val))
+  .refine((val) => !!val.makeRe(), { message: 'Invalid blob pattern' });
+
+const stringOrFileSchema = z.union([
+  z.string(),
+  z.object({ file: z.string() }),
+]);
+
 export const configSchema = z.object({
   llm: z
     .union([
@@ -85,20 +96,19 @@ export const configSchema = z.object({
         .object({
           pr: z
             .object({
+              describe: z
+                .object({
+                  template: stringOrFileSchema.optional(),
+                  prompt: stringOrFileSchema.optional(),
+                  excludedFilePatterns: z.array(globSchema).optional(),
+                })
+                .optional(),
               review: z
                 .object({
                   ruleEvalMode: z.enum(['together', 'separate']).optional(),
                   fileEvalMode: z.enum(['together', 'separate']).optional(),
-                  rules: z
-                    .array(
-                      z.union([
-                        z.string(),
-                        z.object({
-                          file: z.string(),
-                        }),
-                      ])
-                    )
-                    .optional(),
+                  excludedFilePatterns: z.array(globSchema).optional(),
+                  rules: z.array(stringOrFileSchema).optional(),
                 })
                 .optional(),
             })

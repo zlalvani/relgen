@@ -27,6 +27,7 @@
     "ai": "^4.1.16",
     "fuse.js": "^7.0.0",
     "gitdiff-parser": "^0.3.1",
+    "minimatch": "^10.0.1",
     "octokit": "^4.1.0",
     "pino": "^9.6.0",
     "radashi": "^12.3.4",

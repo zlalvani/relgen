@@ -334,17 +334,7 @@ export const githubContextService = (
 
   return {
     pr: {
-      unreleased: async ({
-        owner,
-        repo,
-        include,
-      }: {
-        owner: string;
-        repo: string;
-        include: {
-          issues: boolean;
-        };
-      }) => {
+      unreleased: async ({ owner, repo, include }) => {
         const prs = await getUnreleasedPrs({
           owner,
           repo,
@@ -370,21 +360,7 @@ export const githubContextService = (
           include,
         });
       },
-      betweenTags: async ({
-        owner,
-        repo,
-        include,
-        fromTag,
-        toTag,
-      }: {
-        owner: string;
-        repo: string;
-        include: {
-          issues: boolean;
-        };
-        fromTag?: string;
-        toTag?: string;
-      }) => {
+      betweenTags: async ({ owner, repo, include, fromTag, toTag }) => {
         const prs = await getPrsBetweenTags({
           owner,
           repo,
@@ -412,17 +388,7 @@ export const githubContextService = (
           include,
         });
       },
-      diff: async ({
-        owner,
-        repo,
-        num,
-        excludedFiles,
-      }: {
-        owner: string;
-        repo: string;
-        num: number;
-        excludedFiles?: Set<string>;
-      }) => {
+      diff: async ({ owner, repo, num, excludedFilePatterns }) => {
         const diff = await github.rest.pulls.diff({
           owner,
           repo,
@@ -442,35 +408,22 @@ export const githubContextService = (
               ${serializeToGitHubDiff(
                 diff.data.files
                   .filter((file) => !file.isBinary)
-                  .map((file) => {
-                    return {
-                      ...file,
-                      oldName: file.oldPath.split('/').pop(),
-                      newName: file.newPath.split('/').pop(),
-                    };
-                  })
                   .filter(
                     (file) =>
-                      file.oldName &&
-                      file.newName &&
-                      (!excludedFiles ||
-                        (!excludedFiles.has(file.oldName) &&
-                          !excludedFiles.has(file.newName)))
+                      !excludedFilePatterns ||
+                      !excludedFilePatterns.some(
+                        (pattern) =>
+                          (file.oldPath === file.newPath &&
+                            pattern.match(file.oldPath)) ||
+                          pattern.match(file.newPath)
+                      )
                   )
               )}
             </diff>
             `,
         });
       },
-      get: async ({
-        owner,
-        repo,
-        num,
-      }: {
-        owner: string;
-        repo: string;
-        num: number;
-      }) => {
+      get: async ({ owner, repo, num }) => {
         const pr = await github.$rest.pulls.get({
           owner,
           repo,
@@ -487,16 +440,8 @@ export const githubContextService = (
         owner,
         repo,
         num,
-        excludedFiles,
         excludedContexts,
-      }: {
-        owner: string;
-        repo: string;
-        num: number;
-        excludedFiles?: Set<string>;
-        excludedContexts?: {
-          fileContent?: boolean;
-        };
+        excludedFilePatterns,
       }): Promise<
         (PullRequestFileContext & {
           data: {
@@ -516,7 +461,11 @@ export const githubContextService = (
         if (excludedContexts?.fileContent) {
           return files.data
             .filter(
-              (file) => !excludedFiles || !excludedFiles.has(file.filename)
+              (file) =>
+                !excludedFilePatterns ||
+                !excludedFilePatterns.some((pattern) =>
+                  pattern.match(file.filename)
+                )
             )
             .map((file) => {
               return makeContext({
@@ -546,11 +495,13 @@ export const githubContextService = (
 
         return await parallel(
           3,
-          files.data
-            .filter(
-              (file) => !excludedFiles || !excludedFiles.has(file.filename)
-            )
-            .filter((file) => file.filename),
+          files.data.filter(
+            (file) =>
+              !excludedFilePatterns ||
+              !excludedFilePatterns.some((pattern) =>
+                pattern.match(file.filename)
+              )
+          ),
           async (file) => {
             if (file.status === 'removed') {
               return makeContext({
@@ -630,15 +581,7 @@ export const githubContextService = (
       },
     },
     issue: {
-      get: async ({
-        owner,
-        repo,
-        num,
-      }: {
-        owner: string;
-        repo: string;
-        num: number;
-      }) => {
+      get: async ({ owner, repo, num }) => {
         const issue = await github.$rest.issues.get({
           owner,
           repo,
@@ -680,15 +623,7 @@ export const githubContextService = (
       },
     },
     labels: {
-      get: async ({
-        owner,
-        repo,
-        exclude,
-      }: {
-        owner: string;
-        repo: string;
-        exclude?: Set<string>;
-      }) => {
+      get: async ({ owner, repo, exclude }) => {
         const labels = await github.$rest.issues.listLabelsForRepo({
           owner,
           repo,

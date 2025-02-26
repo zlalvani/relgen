@@ -1,3 +1,4 @@
+import type { Minimatch } from 'minimatch';
 import type {
   DiffContext,
   IssueContext,
@@ -40,7 +41,7 @@ export type RemoteContextService = {
       owner: string;
       repo: string;
       num: number;
-      excludedFiles?: Set<string>;
+      excludedFilePatterns?: Minimatch[];
     }) => Promise<DiffContext>;
     get: (args: {
       owner: string;
@@ -54,7 +55,7 @@ export type RemoteContextService = {
       owner: string;
       repo: string;
       num: number;
-      excludedFiles?: Set<string>;
+      excludedFilePatterns?: Minimatch[];
       excludedContexts?: {
         fileContent?: boolean;
       };
