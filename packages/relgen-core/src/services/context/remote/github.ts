@@ -411,11 +411,8 @@ export const githubContextService = (
                   .filter(
                     (file) =>
                       !excludedFilePatterns ||
-                      !excludedFilePatterns.some(
-                        (pattern) =>
-                          (file.oldPath === file.newPath &&
-                            pattern.match(file.oldPath)) ||
-                          pattern.match(file.newPath)
+                      !excludedFilePatterns.some((pattern) =>
+                        pattern.match(file.newPath)
                       )
                   )
               )}
