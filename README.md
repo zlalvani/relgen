@@ -95,6 +95,7 @@ Create a `.relgen.json` in your project root:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/zlalvani/relgen/refs/heads/main/relgen-config-schema.json",
   "llm": {
     "provider": "openai",
     "model": "gpt-4",
@@ -110,6 +111,8 @@ Create a `.relgen.json` in your project root:
   }
 }
 ```
+
+See the [JSON schema](https://github.com/zlalvani/relgen/blob/main/relgen-config-schema.json) for all config options.
 
 ## Github Action
 
