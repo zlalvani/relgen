@@ -1,11 +1,12 @@
 export type ContextType =
   | 'ticket'
   | 'pr'
+  | 'pr-file'
+  | 'pr-review-comment'
   | 'issue'
   | 'diff'
   | 'code'
-  | 'label'
-  | 'pr-file';
+  | 'label';
 
 export type Context<TType extends ContextType, TData> = {
   type: TType;
@@ -37,6 +38,11 @@ export type TicketContext<TData = any> = Context<'ticket', TData>;
 export type CodeContext<TData = any> = Context<'code', TData>;
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export type LabelContext<TData = any> = Context<'label', TData>;
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+export type PullRequestReviewCommentContext<TData = any> = Context<
+  'pr-review-comment',
+  TData
+>;
 
 // Helper for initializing a context
 export const makeContext = <TType extends ContextType, TData>({
