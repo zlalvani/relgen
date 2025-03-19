@@ -771,9 +771,7 @@ const relgen = ({
 export const createRelgen = (options: RelgenOptions) => {
   const { llm, integrations } = options;
 
-  let logger = options.logger;
-
-  logger = logger ?? pino();
+  const logger = options.logger ?? pino();
 
   const github = createGithubClient({ token: integrations.github.token });
 
