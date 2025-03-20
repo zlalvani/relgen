@@ -9,6 +9,11 @@ import type {
 
 export type RemoteContextService = {
   pr: {
+    reviews: (args: {
+      owner: string;
+      repo: string;
+      num: number;
+    }) => Promise<unknown>;
     unreleased: (args: {
       owner: string;
       repo: string;

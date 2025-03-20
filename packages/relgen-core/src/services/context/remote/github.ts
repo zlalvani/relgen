@@ -334,6 +334,17 @@ export const githubContextService = (
 
   return {
     pr: {
+      reviews: async ({ owner, repo, num }) => {
+        const reviewComments = await github.$rest.pulls.listReviewComments({
+          owner,
+          repo,
+          pull_number: num,
+        });
+
+        logger.debug({
+          reviewComments,
+        });
+      },
       unreleased: async ({ owner, repo, include }) => {
         const prs = await getUnreleasedPrs({
           owner,

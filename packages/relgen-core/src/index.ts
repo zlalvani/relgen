@@ -532,6 +532,12 @@ const relgen = ({
             }),
           ]);
 
+          await remote.context.pr.reviews({
+            owner,
+            repo,
+            num,
+          });
+
           const result = await llm.pr.review(
             {
               pr: pr.pr,
