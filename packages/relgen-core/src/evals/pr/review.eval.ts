@@ -1,4 +1,4 @@
-import { Levenshtein } from 'autoevals';
+import { JSONDiff, Levenshtein } from 'autoevals';
 import { parameterizedEval } from '../parameterize';
 
 await parameterizedEval(
@@ -27,7 +27,7 @@ await parameterizedEval(
             'Follow generally accepted best practices, but do not nitpick.',
           ],
         },
-        expected: 'Hello World!',
+        expected: {},
       },
     ] as const;
   },
@@ -40,10 +40,14 @@ await parameterizedEval(
 
         const review = await llm.pr.review(input);
 
-        return JSON.stringify(review);
+        return review;
       },
       // The scoring methods for the eval
-      scorers: [Levenshtein],
+      scorers: [
+        JSONDiff.partial({
+          stringScorer: Levenshtein,
+        }),
+      ],
     };
   }
 );
