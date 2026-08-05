@@ -650,6 +650,7 @@ pr.command('describe')
         footer,
         excludedContexts,
         excludedFilePatterns,
+        includeExistingComments,
       }
     );
 
@@ -727,11 +728,16 @@ pr.command('review')
     'which contexts to exclude, for smaller context windows (file-content)',
     (val) => z.array(z.enum(['file-content'])).parse(val.split(','))
   )
+  .option(
+    '--include-existing-comments',
+    'include existing PR comments as context to de-duplicate review feedback'
+  )
   .description('review a pull request')
   .action(async (first, second, third, options) => {
     const { owner, repo, num } = parseIssueArgs(first, second, third);
 
     const { rule, write, excludedContexts, footer } = options;
+    const { rule, write, excludedContexts, footer, includeExistingComments } = options;
 
     const ruleEval =
       options.ruleEval ??
